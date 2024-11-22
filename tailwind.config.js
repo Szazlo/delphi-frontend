@@ -13,7 +13,15 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
-  			background: 'hsl(var(--background))',
+			  'lingrad': '#12C2E9',
+			  'lingrad2': '#C471ED',
+			  'lingrad3': '#F64F59',
+			  'rblingrad1': '#009FFF',
+			  'rblingrad2': '#ec2F4B',
+  			'background': '#252525',
+			'background-contrast': '#202020',
+			'error': '#FF6363',
+			'shadow-box': '8E8E8E',
   			foreground: 'hsl(var(--foreground))',
   			card: {
   				DEFAULT: 'hsl(var(--card))',
