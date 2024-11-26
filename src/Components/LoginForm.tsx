@@ -12,13 +12,8 @@ const LoginForm = () => {
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         try {
-            const token = await login(username, password);
-            localStorage.setItem('token', token);
-            // parse token to get user id
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            localStorage.setItem('userId', payload.sub);
-            localStorage.setItem('name', payload.name);
-            navigate('/dashboard');
+            await login(username, password);
+            navigate('/dashboard')
         } catch (error) {
             if (error instanceof Error) {
                 setError('Invalid credentials');

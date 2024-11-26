@@ -25,7 +25,9 @@ function Sidebar() {
             </div>
 
             <div>
-                <a onClick={logout} className="text-error hover:text-error-light">Logout</a>
+                <a onClick={() => {
+                    logout().then(() => navigate('/'));
+                }} className="text-error hover:text-error-light">Logout</a>
             </div>
         </div>
     );
