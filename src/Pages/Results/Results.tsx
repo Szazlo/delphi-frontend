@@ -1,6 +1,6 @@
 import './Results.css'
 import {useNavigate, useParams} from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 import {
     Table,
@@ -21,6 +21,7 @@ interface Result {
     fileName: string;
     status: string;
     output: string;
+    lintOutput: string;
     language: string;
     runtime: string;
     memory: string;
@@ -32,6 +33,8 @@ function Results() {
     const navigate = useNavigate()
     const [results, setResults] = useState<Result[]>([])
     const [specificResult, setSpecificResult] = useState<Result | null>(null)
+    const outputRef = useRef<HTMLTextAreaElement>(null)
+    const lintOutputRef = useRef<HTMLTextAreaElement>(null)
 
     const fetchResults = async () => {
         try {
@@ -80,9 +83,20 @@ function Results() {
         }
     }, [id])
 
+    useEffect(() => {
+        if (outputRef.current) {
+            outputRef.current.style.height = 'auto';
+            outputRef.current.style.height = `${outputRef.current.scrollHeight}px`;
+        }
+        if (lintOutputRef.current) {
+            lintOutputRef.current.style.height = 'auto';
+            lintOutputRef.current.style.height = `${lintOutputRef.current.scrollHeight}px`;
+        }
+    }, [specificResult])
+
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Complete':
+            case 'Completed':
                 return 'text-green-500';
             case 'Pending':
                 return 'text-gray-500';
@@ -114,10 +128,35 @@ function Results() {
                                     <p className={`text-sm ${getStatusColor(specificResult.status)}`}>{specificResult.status}</p>
                                     <p className="text-sm ml-4">{convertTimestampToDateTime(parseInt(specificResult.timestamp))}</p>
                                     <p className="text-sm ml-4">{specificResult.language}</p>
-                                    <p className="text-sm ml-4">Runtime: {specificResult.runtime}</p>
-                                    <p className="text-sm ml-4">Memory: {specificResult.memory}</p>
+                                    <p className="text-sm ml-4">Runtime: {specificResult.runtime} ms</p>
+                                    <p className="text-sm ml-4">Memory: {specificResult.memory} KB</p>
                                 </div>
-                                <Textarea className="h-96" value={specificResult.output} readOnly />
+                                <h3 className="text-lg">Execution Output</h3>
+                                <Textarea
+                                    ref={outputRef}
+                                    className="resize-none overflow-hidden"
+                                    value={specificResult.output}
+                                    readOnly
+                                    onChange={() => {
+                                        if (outputRef.current) {
+                                            outputRef.current.style.height = 'auto';
+                                            outputRef.current.style.height = `${outputRef.current.scrollHeight}px`;
+                                        }
+                                    }}
+                                />
+                                <h3 className="text-lg">Linting</h3>
+                                <Textarea
+                                    ref={lintOutputRef}
+                                    className="resize-none overflow-hidden"
+                                    value={specificResult.lintOutput}
+                                    readOnly
+                                    onChange={() => {
+                                        if (lintOutputRef.current) {
+                                            lintOutputRef.current.style.height = 'auto';
+                                            lintOutputRef.current.style.height = `${lintOutputRef.current.scrollHeight}px`;
+                                        }
+                                    }}
+                                />
                             </div>
                         </div>
                     ) : (
@@ -129,6 +168,7 @@ function Results() {
                                         <TableHead className="w-28">Name</TableHead>
                                         <TableHead className="w-36">Status</TableHead>
                                         <TableHead className="w-36">Language</TableHead>
+                                        <TableHead className="w-36">Time</TableHead>
                                         <TableHead className="w-36"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -138,6 +178,7 @@ function Results() {
                                             <TableCell>{result.fileName}</TableCell>
                                             <TableCell className={`font-semibold ${getStatusColor(result.status)}`}>{result.status}</TableCell>
                                             <TableCell>{result.language}</TableCell>
+                                            <TableCell>{convertTimestampToDateTime(parseInt(result.timestamp))}</TableCell>
                                             <TableCell>
                                                 {result.status !== 'Pending' && result.status !== 'Running' && (
                                                     <button className="border-2 border-gray-600 bg-transparent px-2 py-1 rounded hover:border-gray-700" onClick={() => navigate(`/results/${result.id}`)}>

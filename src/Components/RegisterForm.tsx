@@ -1,49 +1,49 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '@/Api/auth';
+import { register, login } from '@/Api/auth';
 
-const LoginForm = () => {
-    const [credentials, setCredentials] = useState({ username: '', password: '' });
+const RegisterForm = () => {
+    const [formData, setFormData] = useState({ username: '', password: '', email: '' });
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setCredentials(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await login(credentials.username, credentials.password);
+            await register(formData.username, formData.password, formData.email);
+            await login(formData.username, formData.password);
             navigate('/dashboard');
-        } catch (err) {
-            setError(err instanceof Error && err.message === '401' ? 'Invalid username or password' : 'An unknown error occurred');
+        } catch {
+            setError('Registration failed');
         }
     };
 
     return (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="w-96 h-96 bg-zinc-800 rounded-lg p-6 shadow-lg shadow-lingrad2 flex flex-col items-center justify-evenly">
-                <h1 className="text-2xl font-bold text-center">Login</h1>
+                <h1 className="text-2xl font-bold text-center">Register</h1>
                 <form className="mt-4 w-full" onSubmit={handleSubmit}>
-                    {['username', 'password'].map((field) => (
+                    {['username', 'password', 'email'].map(field => (
                         <div key={field} className="mb-4">
                             <input
-                                type={field}
+                                type={field === 'password' ? 'password' : 'text'}
                                 name={field}
                                 placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                                value={credentials[field as keyof typeof credentials]}
+                                value={formData[field as keyof typeof formData]}
                                 onChange={handleChange}
                                 className="p-2 rounded-lg bg-black text-white border-none w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                     ))}
-                    <p className="text-sm text-right text-gray-400">Forgot password?</p>
                     {error && <p className="text-error">{error}</p>}
                     <div className="flex justify-center mt-6">
                         <button type="submit" className="w-1/2 bg-gradient-to-r from-lingrad via-lingrad2 to-lingrad3 border-none">
-                            Login
+                            Register
                         </button>
                     </div>
                 </form>
@@ -52,4 +52,4 @@ const LoginForm = () => {
     );
 };
 
-export default LoginForm;
+export default RegisterForm;

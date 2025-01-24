@@ -4,16 +4,27 @@ import 'filepond/dist/filepond.min.css';
 import FilePondPluginFileEncode from 'filepond-plugin-file-encode';
 import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
-import {isTokenValid} from "@/Api/auth.tsx";
-import {useNavigate} from "react-router-dom";
+import { isTokenValid } from "@/Api/auth.tsx";
+import { useNavigate } from "react-router-dom";
+import { FilePondFile } from "filepond";
 
 // Register FilePond plugins
 registerPlugin(FilePondPluginFileEncode, FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
 
 const HeroSection = () => {
     const [files, setFiles] = useState<File[]>([]);
-    const token = localStorage.getItem('token');
     const navigate = useNavigate();
+    const token = localStorage.getItem('token');
+
+    const handleSubmission = (submissionId: string) => navigate(`/results/${submissionId}`);
+
+    const handleFileUpdate = (fileItems: FilePondFile[]) => {
+        if (isTokenValid()) {
+            setFiles(fileItems.map(item => item.file as File));
+        } else {
+            navigate('/login');
+        }
+    };
 
     return (
         <section className="p-6 text-white my-14">
@@ -35,37 +46,31 @@ const HeroSection = () => {
 
                 {/* File Upload */}
                 <div className="mt-8 md:mt-0 md:w-1/2 md:flex md:justify-end">
-                    <div className="rounded-lg p-6 bg-transparent border-dashed border-2 border-gray-500 inline-block shadow-lg w-full max-w-lg">
+                    <div className="rounded-lg p-6 bg-transparent border-dashed border-2 border-gray-500 shadow-lg w-full max-w-lg">
                         <FilePond
                             files={files}
-                            onupdatefiles={(fileItems) => {
-                                if (isTokenValid()) {
-                                    setFiles(fileItems.map((item) => item.file as File));
-                                } else {
-                                    navigate('/login');
-                                }
-                            }}
+                            onupdatefiles={handleFileUpdate}
                             allowMultiple={false}
                             maxFiles={1}
+                            credits={false}
                             server={{
                                 url: 'http://localhost:8080/api/files',
                                 process: {
                                     url: '/upload',
                                     method: 'POST',
-                                    headers: {
-                                        'Authorization': 'Bearer ' + token
-                                    },
+                                    headers: { Authorization: `Bearer ${token}` },
                                     withCredentials: true,
-                                    onload: (response) => response.key,
+                                    onload: (response) => JSON.parse(response).submissionId,
                                     onerror: (response) => response.data,
                                     ondata: (formData) => {
                                         const file = formData.get('file');
-                                        if (file) {
-                                            formData.append('file', file);
-                                        }
+                                        if (file) formData.append('file', file);
                                         return formData;
-                                    }
-                                }
+                                    },
+                                },
+                            }}
+                            onprocessfile={(error, file) => {
+                                if (!error) handleSubmission(file.serverId);
                             }}
                             name="file"
                             className="bg-transparent border-dashed border-gray-500 text-gray-400"

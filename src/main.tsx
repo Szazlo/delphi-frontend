@@ -5,8 +5,10 @@ import './index.css'
 
 import Landing from './Pages/Landing/Landing'
 import Login from './Pages/Login/Login'
+import Register from './Pages/Register/Register'
 import Dashboard from './Pages/Dashboard/Dashboard'
 import Results from './Pages/Results/Results'
+import Settings from './Pages/Settings/Settings'
 import PrivateRoute from "@/Pages/PrivateRoute.tsx";
 
 createRoot(document.getElementById('root')!).render(
@@ -15,9 +17,11 @@ createRoot(document.getElementById('root')!).render(
             <Routes>
                 <Route path="/" element={<Landing/>}/>
                 <Route path="/login" element={<Login/>}/>
+                <Route path="/register" element={<Register/>}/>
                 <Route path="/dashboard/*" element={<PrivateRoute component={Dashboard} />} />
                 <Route path="/results" element={<PrivateRoute component={Results} />} />
                 <Route path="/results/:id" element={<PrivateRoute component={Results} />} /> {/* Dynamic Route */}
+                <Route path="/settings" element={<PrivateRoute component={Settings} />} />
             </Routes>
         </Router>
     </StrictMode>,
