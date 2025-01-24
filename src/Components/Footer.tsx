@@ -5,9 +5,7 @@ const Footer = () => (
             <div className="w-80">
                 <h2 className="text-purple-400 text-2xl">Delphi</h2>
                 <p className="mt-4">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nostra sociosqu per mauris lectus sit ante
-                    natoque litora. Natoque amet integer massa dignissim sollicitudin tellus et elit. Curae dui ac convallis
-                    faucibus proin purus justo.
+                    Built for aspiring developers, Delphi is here to support your journey from beginner to pro. With tailored feedback and a collaborative learning experience, we're committed to making code review accessible and impactful for everyone.
                 </p>
             </div>
 

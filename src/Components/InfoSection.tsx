@@ -19,11 +19,7 @@ const InfoSection = () => (
         {/* Content */}
         <div className="ml-10 w-1/2">
             <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nostra sociosqu per mauris lectus sit ante
-                natoque litora. Natoque amet integer massa dignissim sollicitudin tellus et elit. Curae dui ac convallis
-                faucibus proin purus justo. Incidunt maximus vulputate habitant venenatis curae interdum dictum ad
-                tempor. Effictur justo facilisi aptent purus at ad auctor eros? Fermentum facilisis class; etiam risus
-                scelerisque feugiat convallis mus elit? Ex nullam porttitor et sodales tortor natoque.
+                Delphi is your personal coding coach. Using advanced AI, peer reviews, and cutting-edge analysis tools, Delphi helps you identify and fix issues in your code while teaching you best practices to grow as a programmer. Whether you're just starting out or refining your craft, Delphi makes learning to code more effective and enjoyable.
             </p>
         </div>
     </div>

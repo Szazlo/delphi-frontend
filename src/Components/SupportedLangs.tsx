@@ -4,12 +4,12 @@ const SupportedLanguages = () => {
             <h2 className="text-2xl mb-4">Supported Languages</h2>
             <div className="overflow-hidden">
                 <div className="flex animate-scroll">
-                    <div className="bg-slate-600 w-24 h-24 rounded-lg flex items-center justify-center">Python</div>
-                    <div className="bg-slate-600 w-24 h-24 ml-4 rounded-lg flex items-center justify-center">JavaScript</div>
-                    <div className="bg-slate-600 w-24 h-24 ml-4 rounded-lg flex items-center justify-center">Java</div>
-                    <div className="bg-slate-600 w-24 h-24 ml-4 rounded-lg flex items-center justify-center">C#</div>
-                    <div className="bg-slate-600 w-24 h-24 ml-4 rounded-lg flex items-center justify-center">C++</div>
-                    <div className="bg-slate-600 w-24 h-24 ml-4 rounded-lg flex items-center justify-center">Ruby</div>
+                    <div className="w-24 h-24 rounded-lg flex items-center justify-center">
+                        <img src="/src/assets/images/python-logo.png" alt="Python" className="object-contain aspect-square"/>
+                    </div>
+                    <div className="w-24 h-24 rounded-lg flex items-center justify-center">
+                        <img src="/src/assets/images/java-logo.png" alt="Java" className="object-contain aspect-square"/>
+                    </div>
                 </div>
             </div>
         </section>
