@@ -1,6 +1,15 @@
-import { Buffer } from 'buffer';
+import {Buffer} from 'buffer';
 
 const API_URL = 'http://localhost:8080/api/auth';
+
+//get profile picture from GET http://localhost:8080/api/users/pfp/:userId
+async function getProfilePicture(userId: string): Promise<string> {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://localhost:8080/api/users/pfp/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    return await response.text();
+}
 
 async function login(username: string, password: string): Promise<boolean> {
     const options = {
@@ -17,6 +26,7 @@ async function login(username: string, password: string): Promise<boolean> {
         localStorage.setItem('userId', parseToken('sub'));
         localStorage.setItem('name', parseToken('name') || parseToken('preferred_username'));
         localStorage.setItem('roles', JSON.stringify(getRoles()));
+        localStorage.setItem('profilePicture', await getProfilePicture(parseToken('sub')) || '');
         return true;
     } catch (error) {
         return Promise.reject(error);
@@ -24,7 +34,7 @@ async function login(username: string, password: string): Promise<boolean> {
 }
 
 async function logout() {
-    ['token', 'userId', 'name', 'roles'].forEach(item => localStorage.removeItem(item));
+    ['token', 'userId', 'name', 'roles', 'profilePicture'].forEach(item => localStorage.removeItem(item));
 }
 
 async function register(username: string, password: string, email: string): Promise<boolean> {

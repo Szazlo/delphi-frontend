@@ -1,17 +1,12 @@
 import './Results.css'
 import {useNavigate, useParams} from 'react-router-dom'
-import { useState, useEffect, useRef } from 'react'
+import {useEffect, useRef, useState} from 'react'
+import {FaFileAlt, FaFolder} from "react-icons/fa";
+import {Editor} from "@monaco-editor/react";
+import JSZip from 'jszip'
 
-import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/Components/ui/table"
-import { Textarea } from "@/Components/ui/textarea"
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/Components/ui/table"
+import {Textarea} from "@/Components/ui/textarea"
 
 import Sidebar from "@/Components/Sidebar.tsx";
 import Topbar from "@/Components/Topbar.tsx";
@@ -29,10 +24,13 @@ interface Result {
 }
 
 function Results() {
-    const { id } = useParams()
+    const {id} = useParams()
     const navigate = useNavigate()
     const [results, setResults] = useState<Result[]>([])
     const [specificResult, setSpecificResult] = useState<Result | null>(null)
+    const [fileTree, setFileTree] = useState<any>(null)
+    const [selectedFileContent, setSelectedFileContent] = useState<string | null>(null)
+    const [zipInstance, setZipInstance] = useState<JSZip | null>(null)
     const outputRef = useRef<HTMLTextAreaElement>(null)
     const lintOutputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -70,10 +68,106 @@ function Results() {
                 return
             }
             setSpecificResult(data)
+
+            // Fetch the zip file as binary data
+            const zipResponse = await fetch(`http://localhost:8080/api/submissions/download/${submissionId}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            const zipBlob = await zipResponse.blob()
+            const zipArrayBuffer = await zipBlob.arrayBuffer()
+            const zip = await JSZip.loadAsync(zipArrayBuffer)
+
+            // Store the JSZip instance for later
+            setZipInstance(zip)
+
+            // Build the file tree from the zip files
+            const tree = buildFileTree(zip.files)
+            setFileTree(tree)
         } catch (error) {
             console.error('Error fetching specific result:', error)
         }
     }
+
+    const buildFileTree = (files: any) => {
+        const tree: any = {}
+        Object.keys(files).forEach((filePath) => {
+            const parts = filePath.split('/')
+            let current = tree
+            parts.forEach((part: string, index: number) => {
+                if (!current[part]) {
+                    current[part] = index === parts.length - 1 ? filePath : {}
+                }
+                current = current[part]
+            })
+        })
+        return tree
+    }
+
+    const handleFileClick = async (filePath: string) => {
+        if (zipInstance) {
+            const file = zipInstance.file(filePath);
+            if (file) {
+                const fileContent = await file.async('text');
+                setSelectedFileContent(fileContent);
+            } else {
+                console.error('File not found in ZIP:', filePath);
+            }
+        }
+    };
+
+    const renderFileTree = (tree: any, path: string = "") => {
+        return Object.keys(tree).map((key) => {
+            const fullPath = path ? `${path}/${key}` : key;
+            if (typeof tree[key] === "string") {
+                return (
+                    <div
+                        key={fullPath}
+                        className="flex items-center space-x-2 pl-2 cursor-pointer hover:text-blue-500"
+                        onClick={() => handleFileClick(fullPath)}
+                    >
+                        <FaFileAlt className="text-gray-500"/>
+                        <span>{key}</span>
+                    </div>
+                );
+            } else {
+                return (
+                    <div key={fullPath} className="pl-2">
+                        <div className="flex items-center space-x-2">
+                            <FaFolder className="text-yellow-500"/>
+                            <span className="font-semibold">{key}</span>
+                        </div>
+                        <div className="ml-4 border-l-2 border-gray-300 pl-2">
+                            {renderFileTree(tree[key], fullPath)}
+                        </div>
+                    </div>
+                );
+            }
+        });
+    };
+
+    const getLanguageFromFileName = (fileName: string): string => {
+        const extension = fileName.split('.').pop();
+        switch (extension) {
+            case 'js':
+                return 'javascript';
+            case 'ts':
+                return 'typescript';
+            case 'py':
+                return 'python';
+            case 'java':
+                return 'java';
+            case 'html':
+                return 'html';
+            case 'css':
+                return 'css';
+            default:
+                return 'plaintext'; // Default to plain text
+        }
+    };
+
 
     useEffect(() => {
         if (id) {
@@ -85,83 +179,119 @@ function Results() {
 
     useEffect(() => {
         if (outputRef.current) {
-            outputRef.current.style.height = 'auto';
-            outputRef.current.style.height = `${outputRef.current.scrollHeight}px`;
+            outputRef.current.style.height = 'auto'
+            outputRef.current.style.height = `${outputRef.current.scrollHeight}px`
         }
         if (lintOutputRef.current) {
-            lintOutputRef.current.style.height = 'auto';
-            lintOutputRef.current.style.height = `${lintOutputRef.current.scrollHeight}px`;
+            lintOutputRef.current.style.height = 'auto'
+            lintOutputRef.current.style.height = `${lintOutputRef.current.scrollHeight}px`
         }
     }, [specificResult])
 
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Completed':
-                return 'text-green-500';
+                return 'text-green-500'
             case 'Pending':
-                return 'text-gray-500';
+                return 'text-gray-500'
             case 'Running':
-                return 'text-amber-500';
+                return 'text-amber-500'
             case 'Failed':
-                return 'text-error';
+                return 'text-error'
             default:
-                return '';
+                return ''
         }
-    };
+    }
 
     function convertTimestampToDateTime(timestamp: number): string {
-        const date = new Date(timestamp);
-        return date.toLocaleString();
+        const date = new Date(timestamp)
+        return date.toLocaleString()
     }
 
     return (
         <>
-            <div className="flex w-screen">
+            <div className="flex w-screen h-screen">
                 <Sidebar/>
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full h-screen">
                     <Topbar/>
-                    {id && specificResult ? (
-                        <div className="flex flex-col mx-4 text-white">
-                            <div className="flex flex-col">
-                                <h2 className="text-lg">Results for {specificResult.fileName}</h2>
-                                <div className="flex justify-start mb-4">
-                                    <p className={`text-sm ${getStatusColor(specificResult.status)}`}>{specificResult.status}</p>
-                                    <p className="text-sm ml-4">{convertTimestampToDateTime(parseInt(specificResult.timestamp))}</p>
-                                    <p className="text-sm ml-4">{specificResult.language}</p>
-                                    <p className="text-sm ml-4">Runtime: {specificResult.runtime} ms</p>
-                                    <p className="text-sm ml-4">Memory: {specificResult.memory} KB</p>
+                    <div className="flex flex-col ml-4 text-white h-full overflow-auto pb-20">
+                        {id && specificResult ? (
+                            <div className="flex flex-col mr-4 space-y-4">
+                                <div>
+                                    <h2 className="text-lg">Results for {specificResult.fileName}</h2>
+                                    <div className="flex justify-start mb-4">
+                                        <p className={`text-sm ${getStatusColor(specificResult.status)}`}>{specificResult.status}</p>
+                                        <p className="text-sm ml-4">{convertTimestampToDateTime(parseInt(specificResult.timestamp))}</p>
+                                        <p className="text-sm ml-4">{specificResult.language}</p>
+                                        <p className="text-sm ml-4">Runtime: {specificResult.runtime} ms</p>
+                                        <p className="text-sm ml-4">Memory: {specificResult.memory} KB</p>
+                                    </div>
                                 </div>
-                                <h3 className="text-lg">Execution Output</h3>
-                                <Textarea
-                                    ref={outputRef}
-                                    className="resize-none overflow-hidden"
-                                    value={specificResult.output}
-                                    readOnly
-                                    onChange={() => {
-                                        if (outputRef.current) {
-                                            outputRef.current.style.height = 'auto';
-                                            outputRef.current.style.height = `${outputRef.current.scrollHeight}px`;
-                                        }
-                                    }}
-                                />
-                                <h3 className="text-lg">Linting</h3>
-                                <Textarea
-                                    ref={lintOutputRef}
-                                    className="resize-none overflow-hidden"
-                                    value={specificResult.lintOutput}
-                                    readOnly
-                                    onChange={() => {
-                                        if (lintOutputRef.current) {
-                                            lintOutputRef.current.style.height = 'auto';
-                                            lintOutputRef.current.style.height = `${lintOutputRef.current.scrollHeight}px`;
-                                        }
-                                    }}
-                                />
-                                
+                                <div>
+                                    <h3 className="text-lg">Execution Output</h3>
+                                    <Textarea
+                                        ref={outputRef}
+                                        className="resize-none overflow-hidden border-0 bg-white bg-opacity-5 rounded-md shadow-md"
+                                        value={specificResult.output}
+                                        readOnly
+                                        onChange={() => {
+                                            if (outputRef.current) {
+                                                outputRef.current.style.height = 'auto'
+                                                outputRef.current.style.height = `${outputRef.current.scrollHeight}px`
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg">Linting</h3>
+                                    <Textarea
+                                        ref={lintOutputRef}
+                                        className="resize-none overflow-hidden border-0 bg-white bg-opacity-5 rounded-md shadow-md"
+                                        value={specificResult.lintOutput}
+                                        readOnly
+                                        onChange={() => {
+                                            if (lintOutputRef.current) {
+                                                lintOutputRef.current.style.height = 'auto'
+                                                lintOutputRef.current.style.height = `${lintOutputRef.current.scrollHeight}px`
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg">Your project</h3>
+                                    <div className="flex bg-white bg-opacity-5 rounded-md shadow-md">
+                                        <div className="flex flex-col w-1/4 p-4 bg-white bg-opacity-5">
+                                            <div className="overflow-auto h-96">{fileTree && renderFileTree(fileTree)}</div>
+                                        </div>
+                                        <div className="w-3/4 p-4">
+                                            {selectedFileContent ? (
+                                                <Editor
+                                                    height="500px"
+                                                    defaultLanguage={"python"}
+                                                    language={getLanguageFromFileName(selectedFileContent)}
+                                                    value={selectedFileContent}
+                                                    options={{
+                                                        readOnly: true,
+                                                        minimap: {enabled: false},
+                                                        scrollBeyondLastLine: false,
+                                                    }}
+                                                    theme="vs-dark"
+                                                />
+                                            ) : (
+                                                <div className="text-gray-500 text-center">Select a file to view its
+                                                    content</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg">Request peer review</h3>
+                                    <div className="flex flex-col bg-white bg-opacity-5 rounded-md shadow-md p-4">
+                                        <p className="text-gray-500">Coming soon...</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center mx-4 text-white">
+                        ) : (
                             <Table>
                                 <TableCaption>A list of your previous submissions</TableCaption>
                                 <TableHeader>
@@ -177,12 +307,15 @@ function Results() {
                                     {results.map((result, index) => (
                                         <TableRow key={index}>
                                             <TableCell>{result.fileName}</TableCell>
-                                            <TableCell className={`font-semibold ${getStatusColor(result.status)}`}>{result.status}</TableCell>
+                                            <TableCell
+                                                className={`font-semibold ${getStatusColor(result.status)}`}>{result.status}</TableCell>
                                             <TableCell>{result.language}</TableCell>
                                             <TableCell>{convertTimestampToDateTime(parseInt(result.timestamp))}</TableCell>
                                             <TableCell>
                                                 {result.status !== 'Pending' && result.status !== 'Running' && (
-                                                    <button className="border-2 border-gray-600 bg-transparent px-2 py-1 rounded hover:border-gray-700" onClick={() => navigate(`/results/${result.id}`)}>
+                                                    <button
+                                                        className="border-2 border-gray-600 bg-transparent px-2 py-1 rounded hover:border-gray-700"
+                                                        onClick={() => navigate(`/results/${result.id}`)}>
                                                         View
                                                     </button>
                                                 )}
@@ -191,8 +324,8 @@ function Results() {
                                     ))}
                                 </TableBody>
                             </Table>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </>
