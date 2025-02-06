@@ -7,9 +7,9 @@ import JSZip from 'jszip'
 
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/Components/ui/table"
 import {Textarea} from "@/Components/ui/textarea"
-
-import Sidebar from "@/Components/Sidebar.tsx";
+import {ReviewerCombobox} from "@/Components/ReviewerCombobox.tsx";
 import Topbar from "@/Components/Topbar.tsx";
+import Sidebar from "@/Components/Sidebar.tsx";
 
 interface Result {
     id: string;
@@ -23,6 +23,13 @@ interface Result {
     timestamp: string;
 }
 
+interface Manager {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+}
+
 function Results() {
     const {id} = useParams()
     const navigate = useNavigate()
@@ -31,8 +38,11 @@ function Results() {
     const [fileTree, setFileTree] = useState<any>(null)
     const [selectedFileContent, setSelectedFileContent] = useState<string | null>(null)
     const [zipInstance, setZipInstance] = useState<JSZip | null>(null)
+    const [managers, setManagers] = useState<Manager[]>([])
+    const [selectedReviewer, setSelectedReviewer] = useState<Manager | null>(null);
     const outputRef = useRef<HTMLTextAreaElement>(null)
     const lintOutputRef = useRef<HTMLTextAreaElement>(null)
+    const [reviewerAssigned, setReviewerAssigned] = useState(false);
 
     const fetchResults = async () => {
         try {
@@ -88,6 +98,67 @@ function Results() {
             setFileTree(tree)
         } catch (error) {
             console.error('Error fetching specific result:', error)
+        }
+    }
+
+    const fetchManagers = async () => {
+        try {
+            const token = localStorage.getItem('token')
+            const response = await fetch(`http://localhost:8080/api/auth/managers`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            const data = await response.json()
+            setManagers(data)
+        } catch (error) {
+            console.error('Error fetching managers:', error)
+        }
+    }
+
+    const fetchReviewerStatus = async (submissionId: string) => {
+        try {
+            const token = localStorage.getItem('token')
+            const response = await fetch(`http://localhost:8080/api/submissions/reviewer/${submissionId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            const data = await response.json()
+            if (data.length > 0) {
+                setReviewerAssigned(true)
+                const reviewer = managers.find(manager => manager.id === data.reviewerId)
+                if (reviewer) {
+                    setSelectedReviewer(reviewer)
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching reviewer status:', error)
+        }
+    }
+
+    const assignReviewer = async (submissionId: string, reviewerId: string) => {
+        try {
+            const token = localStorage.getItem('token')
+            const response = await fetch(`http://localhost:8080/api/submissions/${submissionId}/addreviewer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Authorization: `Bearer ${token}`
+                },
+                body: `reviewerId=${reviewerId}`
+            })
+            if (response.status === 200) {
+                setReviewerAssigned(true)
+            } else {
+                console.error('Error assigning reviewer:', response)
+            }
+        } catch (error) {
+            console.error('Error assigning reviewer:', error)
         }
     }
 
@@ -168,12 +239,18 @@ function Results() {
         }
     };
 
-
     useEffect(() => {
         if (id) {
             fetchSpecificResult(id)
         } else {
             fetchResults()
+        }
+        fetchManagers()
+    }, [id])
+
+    useEffect(() => {
+        if (id) {
+            fetchReviewerStatus(id)
         }
     }, [id])
 
@@ -284,11 +361,31 @@ function Results() {
                                         </div>
                                     </div>
                                 </div>
-                                <div>
+                                <div className="flex flex-col">
                                     <h3 className="text-lg">Request peer review</h3>
-                                    <div className="flex flex-col bg-white bg-opacity-5 rounded-md shadow-md p-4">
-                                        <p className="text-gray-500">Coming soon...</p>
-                                    </div>
+                                    {reviewerAssigned ? (
+                                        <p className="text-sm text-green-500">A reviewer has already been assigned to this submission.</p>
+                                    ) : (
+                                        <>
+                                            <ReviewerCombobox
+                                                managers={managers}
+                                                selectedReviewer={selectedReviewer}
+                                                setSelectedReviewer={setSelectedReviewer}
+                                            />
+                                            <button
+                                                className="bg-gradient-to-r from-blue-500 to-pink-500 text-white px-4 py-2 rounded-lg mt-4 w-36"
+                                                onClick={() => {
+                                                    if (selectedReviewer) {
+                                                        assignReviewer(id!, selectedReviewer.id)
+                                                    } else {
+                                                        console.log('Please select a reviewer');
+                                                    }
+                                                }}
+                                            >
+                                                Send Request
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ) : (

@@ -10,6 +10,7 @@ import Dashboard from './Pages/Dashboard/Dashboard'
 import Results from './Pages/Results/Results'
 import Settings from './Pages/Settings/Settings'
 import PrivateRoute from "@/Pages/PrivateRoute.tsx";
+import Groups from "@/Pages/Groups/Groups.tsx";
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -19,6 +20,9 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/login" element={<Login/>}/>
                 <Route path="/register" element={<Register/>}/>
                 <Route path="/dashboard/*" element={<PrivateRoute component={Dashboard} />} />
+                <Route path="/requests" element={<PrivateRoute component={Dashboard} />} />
+                <Route path="/groups" element={<PrivateRoute component={Groups} />} />
+                <Route path="/groups/:id" element={<PrivateRoute component={Groups} />} /> {/* Dynamic Route */}
                 <Route path="/results" element={<PrivateRoute component={Results} />} />
                 <Route path="/results/:id" element={<PrivateRoute component={Results} />} /> {/* Dynamic Route */}
                 <Route path="/settings" element={<PrivateRoute component={Settings} />} />

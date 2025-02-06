@@ -4,14 +4,20 @@ import { logout } from "@/Api/auth";
 const Sidebar = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const roles = localStorage.getItem('roles');
 
     const isActive = (path: string) => location.pathname.startsWith(path);
 
     const navItems = [
         { label: "Dashboard", path: "/dashboard" },
+        { label: "Groups", path: "/groups" },
         { label: "Results", path: "/results" },
         { label: "Settings", path: "/settings" },
     ];
+
+    if (roles?.includes('admin') || roles?.includes('manager')) {
+        navItems.splice(1, 0, { label: "Requests", path: "/requests" });
+    }
 
     const handleLogout = async () => {
         await logout();
