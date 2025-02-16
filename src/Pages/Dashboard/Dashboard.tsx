@@ -34,7 +34,6 @@ function Dashboard() {
                 }
                 const data = await response.json();
                 setGroups(data);
-                console.log(data);
             } catch (error) {
                 console.error((error as Error).message);
             }

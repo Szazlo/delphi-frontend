@@ -24,7 +24,7 @@ const AssignmentCard = ({ title, dueDate, maxScore, onClick, onClone }: Assignme
             <button
                 onClick={(e) => {
                     e.stopPropagation();
-                    if(onClone) onClone();
+                    onClone();
                 }}
                 className="text-white font-bold py-1 px-2 rounded mt-2 bg-white bg-opacity-10 hover:bg-opacity-20 transition duration-300"
             >

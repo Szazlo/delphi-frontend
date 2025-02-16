@@ -26,7 +26,7 @@ interface Group {
 interface Assignment {
     dueDate: string | null;
     id: string;
-    group_id: string;
+    group: Group;
     title: string;
     description: string;
     timeLimit: number;
@@ -124,7 +124,6 @@ function Groups() {
                 }
                 const data = await response.json();
                 setAssignments(data);
-                console.log(data);
 
                 const groupResponse = await fetch(`http://localhost:8080/api/groups/${id}`, {
                     headers: {
@@ -200,6 +199,34 @@ function Groups() {
         setSelectedAssignment(assignment);
         setShowAssignmentDialog(true);
         navigate(`/assignments/${assignment.id}`);
+    };
+
+    const handleCloneAssignment = async (assignment: Assignment) => {
+        const token = localStorage.getItem('token');
+        const formattedDueDate = assignment.dueDate ? new Date(assignment.dueDate).toISOString().replace('T', ' ').replace('Z', '') : null;
+        const formattedData = {
+            title: `${assignment.title} (Copy)`,
+            description: assignment.description,
+            time_limit: assignment.timeLimit,
+            memory_limit: assignment.memoryLimit,
+            due_date: formattedDueDate,
+            max_score: assignment.maxScore,
+            group_id: assignment.group.id,
+        };
+        const url = 'http://localhost:8080/api/assignments';
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(formattedData),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to clone assignment');
+        }
+        const data = await response.json();
+        setAssignments(prevAssignments => [...prevAssignments, data]);
     };
 
     const filteredUsers = users.filter(user =>
@@ -305,6 +332,7 @@ function Groups() {
                                             dueDate={assignment.dueDate}
                                             maxScore={assignment.maxScore}
                                             onClick={() => handleSelectAssignment(assignment)}
+                                            onClone={() => handleCloneAssignment(assignment)}
                                         />
                                     ))
                                 ) : (

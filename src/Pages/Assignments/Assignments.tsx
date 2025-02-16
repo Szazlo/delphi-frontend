@@ -16,6 +16,7 @@ interface Assignment {
     dueDate: string | null;
     id: string;
     group_id: string;
+    group: Group;
     title: string;
     description: string;
     timeLimit: number;
@@ -131,7 +132,7 @@ function Assignments() {
             memory_limit: assignment.memoryLimit,
             due_date: formattedDueDate,
             max_score: assignment.maxScore,
-            group_id: assignment.group_id,
+            group_id: assignment.group.id,
         };
         const url = 'http://localhost:8080/api/assignments';
         const response = await fetch(url, {
