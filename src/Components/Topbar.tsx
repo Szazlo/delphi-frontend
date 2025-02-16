@@ -2,7 +2,7 @@ function Topbar() {
     const name = localStorage.getItem('name');
     const profilePicture = localStorage.getItem('profilePicture');
     return (
-        <div className="w-full h-16 text-gray-300 flex items-center justify-between px-6 shadow-md mb-2">
+        <div className="w-full h-16 text-gray-300 flex items-center justify-between px-6 shadow-md mb-2 overflow-hidden">
             <div className="text-xl font-semibold text-gray-100">
                 Welcome, {name?.split(' ')[0]}
             </div>

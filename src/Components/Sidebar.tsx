@@ -11,6 +11,7 @@ const Sidebar = () => {
     const navItems = [
         { label: "Dashboard", path: "/dashboard" },
         { label: "Groups", path: "/groups" },
+        { label: "Assignments", path: "/assignments" },
         { label: "Results", path: "/results" },
         { label: "Settings", path: "/settings" },
     ];
@@ -25,7 +26,7 @@ const Sidebar = () => {
     };
 
     return (
-        <div className="h-screen w-44 bg-background-contrast text-gray-300 flex flex-col justify-between p-4 shadow-lg shadow-shadow-box">
+        <div className="h-screen w-44 bg-background-contrast text-gray-300 flex flex-col justify-between p-4 shadow-lg shadow-shadow-box w-min">
             <div>
                 <h1
                     onClick={() => navigate('/')}

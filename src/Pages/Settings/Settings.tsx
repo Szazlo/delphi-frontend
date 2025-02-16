@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import {useState, useEffect} from 'react';
 import Sidebar from "@/Components/Sidebar.tsx";
-import { Buffer } from 'buffer';
-import UserTable from "@/Components/UserTable";
+import {Buffer} from 'buffer';
+import UserManagementTable from "@/Components/UserManagementTable.tsx";
 
 interface UserDetails {
     firstName: string;
@@ -37,7 +37,13 @@ function decodeToken(token: string): { userId: string, userDetails: UserDetails,
 }
 
 function Settings() {
-    const [userDetails, setUserDetails] = useState<UserDetails>({ firstName: '', lastName: '', username: '', email: '', profilePicture: '' });
+    const [userDetails, setUserDetails] = useState<UserDetails>({
+        firstName: '',
+        lastName: '',
+        username: '',
+        email: '',
+        profilePicture: ''
+    });
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [userId, setUserId] = useState<string>('');
@@ -49,7 +55,7 @@ function Settings() {
         const token = localStorage.getItem('token');
         if (token) {
             try {
-                const { userId, userDetails, roles } = decodeToken(token);
+                const {userId, userDetails, roles} = decodeToken(token);
                 setUserId(userId);
                 setUserDetails(userDetails);
                 setRoles(roles);
@@ -98,15 +104,15 @@ function Settings() {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setUserDetails(prevDetails => ({ ...prevDetails, [name]: value }));
+        const {name, value} = e.target;
+        setUserDetails(prevDetails => ({...prevDetails, [name]: value}));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         try {
-            const { profilePicture, ...detailsToUpdate } = userDetails; // Exclude profilePicture from the update request
+            const {profilePicture, ...detailsToUpdate} = userDetails; // Exclude profilePicture from the update request
             const token = localStorage.getItem('token');
             const response = await fetch(`http://localhost:8080/api/auth/update/${userId}`, {
                 method: 'PUT',
@@ -136,7 +142,7 @@ function Settings() {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({ profilePicture: userDetails.profilePicture }) // Only update the profile picture
+                body: JSON.stringify({pfp: userDetails.profilePicture}) // Only update the profile picture
             });
             if (!response.ok) {
                 const data = await response.json();
@@ -264,7 +270,7 @@ function Settings() {
                             </button>
                         </div>
                     </div>
-                    { roles.includes('admin') && (
+                    {roles.includes('admin') && (
                         <div className="w-full max-w-4xl mt-8 text-white">
                             <h2 className="text-xl font-bold text-white mb-4">User Management</h2>
                             <input
@@ -274,7 +280,9 @@ function Settings() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="mb-4 p-2 rounded border border-gray-300 text-black"
                             />
-                            <UserTable users={filteredUsers}/>
+                            <div className="overflow-y-scroll h-96">
+                                <UserManagementTable users={filteredUsers}/>
+                            </div>
                         </div>
                     )}
                 </div>

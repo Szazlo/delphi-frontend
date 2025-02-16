@@ -21,6 +21,9 @@ interface Result {
     runtime: string;
     memory: string;
     timestamp: string;
+    assignment: {
+        title: string;
+    };
 }
 
 interface Manager {
@@ -302,6 +305,7 @@ function Results() {
                                         <p className="text-sm ml-4">{specificResult.language}</p>
                                         <p className="text-sm ml-4">Runtime: {specificResult.runtime} ms</p>
                                         <p className="text-sm ml-4">Memory: {specificResult.memory} KB</p>
+                                        <p className="text-sm ml-4">Assignment: {specificResult.assignment.title}</p>
                                     </div>
                                 </div>
                                 <div>
@@ -397,6 +401,7 @@ function Results() {
                                         <TableHead className="w-36">Status</TableHead>
                                         <TableHead className="w-36">Language</TableHead>
                                         <TableHead className="w-36">Time</TableHead>
+                                        <TableHead className="w-36">Assignment</TableHead>
                                         <TableHead className="w-36"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -408,6 +413,7 @@ function Results() {
                                                 className={`font-semibold ${getStatusColor(result.status)}`}>{result.status}</TableCell>
                                             <TableCell>{result.language}</TableCell>
                                             <TableCell>{convertTimestampToDateTime(parseInt(result.timestamp))}</TableCell>
+                                            <TableCell>{result.assignment.title}</TableCell>
                                             <TableCell>
                                                 {result.status !== 'Pending' && result.status !== 'Running' && (
                                                     <button

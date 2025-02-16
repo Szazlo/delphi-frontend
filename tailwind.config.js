@@ -21,6 +21,7 @@ export default {
   			'background': '#252525',
 			'background-contrast': '#202020',
 			'error': '#FF6363',
+			'success': '#4fc96d',
 			'shadow-box': '8E8E8E',
   			foreground: 'hsl(var(--foreground))',
   			card: {
