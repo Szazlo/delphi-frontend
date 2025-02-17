@@ -210,7 +210,7 @@ function Assignments() {
                                     }
                                 }} />
                             </div>
-                            <ul className="space-y-4">
+                            <ul className="space-y-4 h-screen overflow-y-scroll">
                                 {assignments.length > 0 ? (
                                     assignments.map((assignment) => (
                                         <AssignmentCard
@@ -225,6 +225,7 @@ function Assignments() {
                                 ) : (
                                     <p className="text-gray-300">There are no assignments currently.</p>
                                 )}
+                                <div className="h-40" />
                             </ul>
                         </>
                     )}

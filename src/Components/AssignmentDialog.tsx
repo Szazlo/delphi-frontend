@@ -7,6 +7,11 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/Components/ui/collapsible"
 
 interface Assignment {
     dueDate: string | null;
@@ -42,9 +47,10 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
         memoryLimit: assignment?.memoryLimit || 500,
         maxScore: assignment?.maxScore || 0,
     });
-
+    const [series, setSeries] = useState<number | null>(null);
     const [groups, setGroups] = useState<Group[]>([]);
     const [isOpen, setIsOpen] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchGroups = async () => {
@@ -100,22 +106,42 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
             max_score: formData.maxScore,
             group_id: formData.group_id,
         };
-        const url = assignment ? `http://localhost:8080/api/assignments/${assignment.id}` : 'http://localhost:8080/api/assignments';
-        const method = assignment ? 'PUT' : 'POST';
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(formattedData),
-        });
-        if (!response.ok) {
-            throw new Error('Failed to save assignment');
+
+        const createAssignment = async (data: any) => {
+            const url = assignment ? `http://localhost:8080/api/assignments/${assignment.id}` : 'http://localhost:8080/api/assignments';
+            const method = assignment ? 'PUT' : 'POST';
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to save assignment');
+            }
+            return await response.json();
+        };
+
+        try {
+            if (series && series > 1) {
+                for (let i = 1; i <= series; i++) {
+                    const dataWithSeries = {
+                        ...formattedData,
+                        title: `${formData.title} - ${i}`,
+                    };
+                    const data = await createAssignment(dataWithSeries);
+                    onSave(data, formData.group_id);
+                }
+            } else {
+                const data = await createAssignment(formattedData);
+                onSave(data, formData.group_id);
+            }
+            setIsOpen(false);
+        } catch (error) {
+            setError((error as Error).message);
         }
-        const data = await response.json();
-        onSave(data, formData.group_id);
-        setIsOpen(false);
     };
 
     const handleDelete = async () => {
@@ -144,8 +170,10 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle className="text-gray-300">{assignment ? 'Edit Assignment' : 'Create Assignment'}</DialogTitle>
-                    <DialogDescription>Fill in the details below to {assignment ? 'edit' : 'create'} an assignment</DialogDescription>
+                    <DialogTitle
+                        className="text-gray-300">{assignment ? 'Edit Assignment' : 'Create Assignment'}</DialogTitle>
+                    <DialogDescription>Fill in the details below to {assignment ? 'edit' : 'create'} an
+                        assignment</DialogDescription>
                 </DialogHeader>
                 <div className="bg-white bg-opacity-5 p-4 rounded shadow-lg text-white">
                     {!assignment && (
@@ -228,6 +256,24 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
                         </button>
                     </div>
                 </div>
+                <Collapsible>
+                    <CollapsibleTrigger className="bg-transparent border-1 border-gray-600 text-white font-bold py-2 px-4 rounded w-full text-center">
+                        Create a Series
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <div className="bg-white bg-opacity-5 p-4 rounded shadow-lg text-white">
+                            <p className="text-gray-300 w-full p-2 text-sm font-semibold">
+                                Providing a number here will create the number duplicates with the same properties.<br/>The title for each will be the provided title with "- n" appended to it i.e. Assignment - 1.
+                            </p>
+                            <input type="number"
+                                   placeholder="Number of assignments"
+                                   className="mb-2 p-2 border rounded w-full bg-transparent border-gray-600"
+                                   onChange={(e) => setSeries(e.target.value ? parseInt(e.target.value) : null)}
+                                   min={2}
+                            />
+                        </div>
+                    </CollapsibleContent>
+                </Collapsible>
             </DialogContent>
         </Dialog>
     );

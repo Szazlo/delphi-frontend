@@ -402,27 +402,17 @@ function Results() {
                                         <TableHead className="w-36">Language</TableHead>
                                         <TableHead className="w-36">Time</TableHead>
                                         <TableHead className="w-36">Assignment</TableHead>
-                                        <TableHead className="w-36"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {results.map((result, index) => (
-                                        <TableRow key={index}>
+                                        <TableRow key={index} onClick={() => navigate(`/results/${result.id}`)} className="cursor-pointer hover:bg-gray-800">
                                             <TableCell>{result.fileName}</TableCell>
                                             <TableCell
                                                 className={`font-semibold ${getStatusColor(result.status)}`}>{result.status}</TableCell>
                                             <TableCell>{result.language}</TableCell>
                                             <TableCell>{convertTimestampToDateTime(parseInt(result.timestamp))}</TableCell>
                                             <TableCell>{result.assignment.title}</TableCell>
-                                            <TableCell>
-                                                {result.status !== 'Pending' && result.status !== 'Running' && (
-                                                    <button
-                                                        className="border-2 border-gray-600 bg-transparent px-2 py-1 rounded hover:border-gray-700"
-                                                        onClick={() => navigate(`/results/${result.id}`)}>
-                                                        View
-                                                    </button>
-                                                )}
-                                            </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
