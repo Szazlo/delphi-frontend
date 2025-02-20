@@ -3,13 +3,17 @@ import {useNavigate, useParams} from 'react-router-dom'
 import {useEffect, useRef, useState} from 'react'
 import {FaFileAlt, FaFolder} from "react-icons/fa";
 import {Editor} from "@monaco-editor/react";
+import type * as monacoEditor from "monaco-editor";
 import JSZip from 'jszip'
+import {createReviewManager, ReviewCommentState, type ReviewManager} from "@/Components/monacoReview";
+import { type ReviewCommentEvent } from "@/Components/monacoReview/events-comments-reducers.ts";
 
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/Components/ui/table"
 import {Textarea} from "@/Components/ui/textarea"
 import {ReviewerCombobox} from "@/Components/ReviewerCombobox.tsx";
 import Topbar from "@/Components/Topbar.tsx";
 import Sidebar from "@/Components/Sidebar.tsx";
+import {render} from "react-dom";
 
 interface Result {
     id: string;
@@ -33,6 +37,8 @@ interface Manager {
     lastName: string;
 }
 
+let reviewManager: ReviewManager;
+
 function Results() {
     const {id} = useParams()
     const navigate = useNavigate()
@@ -46,6 +52,10 @@ function Results() {
     const outputRef = useRef<HTMLTextAreaElement>(null)
     const lintOutputRef = useRef<HTMLTextAreaElement>(null)
     const [reviewerAssigned, setReviewerAssigned] = useState(false);
+    const [currentEditor, setCurrentEditor] = useState<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
+    const [selectedFile, setSelectedFile] = useState<string | null>(null);
+    const commentsRef = useRef<Record<string, any>>({});
+    const [comments, setComments] = useState<ReviewCommentState[]>([]);
 
     const fetchResults = async () => {
         try {
@@ -186,6 +196,7 @@ function Results() {
             if (file) {
                 const fileContent = await file.async('text');
                 setSelectedFileContent(fileContent);
+                setSelectedFile(filePath);
             } else {
                 console.error('File not found in ZIP:', filePath);
             }
@@ -241,6 +252,23 @@ function Results() {
                 return 'plaintext'; // Default to plain text
         }
     };
+
+    const renderComments = () => {
+        setComments(reviewManager ? Object.values(reviewManager.store.comments) : []);
+    };
+
+    useEffect(() => {
+        if (currentEditor && selectedFile) {
+            if (!commentsRef.current[selectedFile]) {
+                commentsRef.current[selectedFile] = [];
+            }
+            reviewManager = createReviewManager(currentEditor, localStorage.getItem("name") || "Unknown", commentsRef.current[selectedFile], (updatedComments) => {
+                commentsRef.current[selectedFile] = updatedComments;
+                renderComments();
+                console.log("Updated Comments", comments);
+            });
+        }
+    }, [currentEditor]);
 
     useEffect(() => {
         if (id) {
@@ -356,6 +384,8 @@ function Results() {
                                                         minimap: {enabled: false},
                                                         scrollBeyondLastLine: false,
                                                     }}
+                                                    onMount={(editor) => setCurrentEditor(editor)}
+                                                    onChange={renderComments}
                                                     theme="vs-dark"
                                                 />
                                             ) : (
@@ -390,6 +420,22 @@ function Results() {
                                             </button>
                                         </>
                                     )}
+                                </div>
+                            {/*    Comments*/}
+                                <div className="flex flex-col">
+                                    <h3 className="text-lg">Comments</h3>
+                                    {
+                                        comments.map((comment, index) => (
+                                            <div key={index}
+                                                 className="flex flex-col bg-white bg-opacity-5 rounded-md p-4 mt-4">
+                                                <div className="flex justify-between">
+                                                    <p className="text-sm font-semibold">{comment.comment.author}</p>
+                                                    <p className="text-sm">{convertTimestampToDateTime(parseInt(comment.comment.dt))}</p>
+                                                </div>
+                                                <p className="text-sm mt-2">{comment.comment.text}</p>
+                                            </div>
+                                        ))
+                                    }
                                 </div>
                             </div>
                         ) : (
