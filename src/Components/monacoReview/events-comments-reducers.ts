@@ -7,6 +7,7 @@ export type ProposedReviewCommentEvent =
       commentType?: ReviewCommentType;
       typeState?: ReviewCommentTypeState;
       targetId?: string;
+      filePath: string;
     }
   | { type: "edit"; text?: string; typeState?: ReviewCommentTypeState; targetId: string }
   | { type: "delete"; targetId: string };
@@ -75,6 +76,7 @@ export function commentReducer(event: ReviewCommentEvent, state: ReviewCommentSt
           status: ReviewCommentStatus.active,
           type: event.commentType ?? ReviewCommentType.comment,
           typeState: event.typeState,
+          filePath: event.filePath,
         });
         // console.debug("insert", event);
         dirtyLineNumbers.add(event.lineNumber);
@@ -137,6 +139,7 @@ export interface ReviewComment {
   status: ReviewCommentStatus;
   type: ReviewCommentType;
   typeState: ReviewCommentTypeState;
+  filePath: string;
 }
 
 export enum ReviewCommentStatus {

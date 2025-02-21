@@ -117,6 +117,7 @@ export interface ReviewManagerConfig {
   setClassNames?: boolean;
   verticalOffset?: number;
   enableMarkdown?: boolean;
+  filePath: string;
 }
 
 export type FormatDate = (dt: Date | string) => string;

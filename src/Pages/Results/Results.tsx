@@ -262,13 +262,19 @@ function Results() {
             if (!commentsRef.current[selectedFile]) {
                 commentsRef.current[selectedFile] = [];
             }
-            reviewManager = createReviewManager(currentEditor, localStorage.getItem("name") || "Unknown", commentsRef.current[selectedFile], (updatedComments) => {
-                commentsRef.current[selectedFile] = updatedComments;
-                renderComments();
-                console.log("Updated Comments", comments);
-            });
+            reviewManager = createReviewManager(
+                currentEditor,
+                localStorage.getItem("name") || "Unknown",
+                commentsRef.current[selectedFile],
+                (updatedComments) => {
+                    commentsRef.current[selectedFile] = updatedComments;
+                    renderComments();
+                    console.log("Updated Comments", updatedComments);
+                },
+                { filePath: selectedFile } // Pass the correct configuration object
+            );
         }
-    }, [currentEditor]);
+    }, [currentEditor, selectedFile]);
 
     useEffect(() => {
         if (id) {
@@ -432,6 +438,7 @@ function Results() {
                                                     <p className="text-sm font-semibold">{comment.comment.author}</p>
                                                     <p className="text-sm">{convertTimestampToDateTime(parseInt(comment.comment.dt))}</p>
                                                 </div>
+                                                <p className="text-sm mt-2">{comment.comment.filePath}</p>
                                                 <p className="text-sm mt-2">{comment.comment.text}</p>
                                             </div>
                                         ))
