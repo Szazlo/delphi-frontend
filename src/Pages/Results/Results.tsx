@@ -5,8 +5,7 @@ import {FaFileAlt, FaFolder} from "react-icons/fa";
 import {Editor} from "@monaco-editor/react";
 import type * as monacoEditor from "monaco-editor";
 import JSZip from 'jszip'
-import {createReviewManager, ReviewCommentState, type ReviewManager} from "@/Components/monacoReview";
-import { type ReviewCommentEvent } from "@/Components/monacoReview/events-comments-reducers.ts";
+import {createReviewManager, ReviewCommentState, type ReviewManager, ReviewCommentEvent} from "@/Components/monacoReview";
 
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/Components/ui/table"
 import {Textarea} from "@/Components/ui/textarea"
@@ -35,6 +34,18 @@ interface Manager {
     username: string;
     firstName: string;
     lastName: string;
+}
+
+interface Comment {
+    id: string;
+    submissionId: string;
+    filePath: string;
+    lineNumber: number;
+    text: string;
+    authorId: string;
+    parentId?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 let reviewManager: ReviewManager;
@@ -193,6 +204,72 @@ function Results() {
         }
     }
 
+    const fetchComments = async (submissionId: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:8080/api/comments/submission/${submissionId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const comments = await response.json();
+            return comments;
+        } catch (error) {
+            console.error('Error fetching comments:', error);
+            return [];
+        }
+    };
+
+    const saveComment = async (event: ReviewCommentEvent) => {
+        try {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+
+            const comment = {
+                submissionId: id, // Your submission ID from params
+                filePath: event.filePath,
+                lineNumber: event.lineNumber,
+                text: event.text,
+                authorId: userId,
+                parentId: event.targetId // For replies
+            };
+
+            const response = await fetch('http://localhost:8080/api/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(comment)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save comment');
+            }
+
+            const savedComment = await response.json();
+            return savedComment;
+        } catch (error) {
+            console.error('Error saving comment:', error);
+            throw error;
+        }
+    };
+
+    const deleteComment = async (commentId: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`http://localhost:8080/api/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+            throw error;
+        }
+    };
+
     const buildFileTree = (files: any) => {
         const tree: any = {}
         Object.keys(files).forEach((filePath) => {
@@ -223,12 +300,33 @@ function Results() {
                         reviewManager.clearAllViewZonesAndDecorations();
                     }
 
+                    const comments = await fetchComments(id!);
+                    const fileComments = comments.filter((comment: Comment) => comment.filePath === filePath);
+
+                    const commentEvents = fileComments.map((c: Comment) => ({
+                        type: 'create',
+                        id: c.id,
+                        lineNumber: c.lineNumber,
+                        text: c.text,
+                        filePath: c.filePath,
+                        createdBy: c.authorId,
+                        createdAt: new Date(c.createdAt).getTime(),
+                        targetId: c.parentId
+                    }));
+
                     // Initialize new ReviewManager for the selected file
                     reviewManager = createReviewManager(
                         currentEditor,
                         localStorage.getItem("name") || "Unknown",
-                        commentsRef.current[filePath] || [], // Use empty array if no comments exist
-                        (updatedComments) => {
+                        commentEvents,
+                        async (updatedComments) => {
+                            // Handle comment updates
+                            const latestComment = updatedComments[updatedComments.length - 1];
+                            if (latestComment.type === 'create') {
+                                await saveComment(latestComment);
+                            } else if (latestComment.type === 'delete') {
+                                await deleteComment(latestComment.targetId);
+                            }
                             commentsRef.current[filePath] = updatedComments;
                             renderComments();
                         },
@@ -451,23 +549,6 @@ function Results() {
                                             </button>
                                         </>
                                     )}
-                                </div>
-                            {/*    Comments*/}
-                                <div className="flex flex-col">
-                                    <h3 className="text-lg">Comments</h3>
-                                    {
-                                        comments.map((comment, index) => (
-                                            <div key={index}
-                                                 className="flex flex-col bg-white bg-opacity-5 rounded-md p-4 mt-4">
-                                                <div className="flex justify-between">
-                                                    <p className="text-sm font-semibold">{comment.comment.author}</p>
-                                                    <p className="text-sm">{convertTimestampToDateTime(parseInt(comment.comment.dt))}</p>
-                                                </div>
-                                                <p className="text-sm mt-2">{comment.comment.filePath}</p>
-                                                <p className="text-sm mt-2">{comment.comment.text}</p>
-                                            </div>
-                                        ))
-                                    }
                                 </div>
                             </div>
                         ) : (

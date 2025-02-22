@@ -1,5 +1,3 @@
-// import type { CodeSelection, ReviewCommentType, ReviewCommentTypeState } from './types';
-
 export type ProposedReviewCommentEvent =
     | {
   type: "create";
@@ -9,16 +7,29 @@ export type ProposedReviewCommentEvent =
   commentType?: ReviewCommentType;
   typeState?: ReviewCommentTypeState;
   targetId?: string;
-  filePath: string; // Required field for file-based comments
+  filePath: string;
 }
-    | { type: "edit"; text?: string; typeState?: ReviewCommentTypeState; targetId: string }
-    | { type: "delete"; targetId: string };
+    | {
+  type: "edit";
+  text?: string;
+  typeState?: ReviewCommentTypeState;
+  targetId: string;
+  lineNumber: number;
+  filePath: string;
+}
+    | {
+  type: "delete";
+  targetId: string;
+  text: string;
+  lineNumber: number;
+  filePath: string;
+};
 
 export type ReviewCommentEvent = ProposedReviewCommentEvent & {
   id: string;
   createdAt: number;
   createdBy: string;
-  filePath: string; // Required field for file-based comments
+  filePath: string;
 };
 
 export interface ReviewCommentStore {
@@ -26,7 +37,7 @@ export interface ReviewCommentStore {
   deletedCommentIds?: Set<string>;
   dirtyCommentIds?: Set<string>;
   events: ReviewCommentEvent[];
-  fileComments: Record<string, Set<string>>; // Map file paths to comment IDs
+  fileComments: Record<string, Set<string>>;
 }
 
 export function commentReducer(event: ReviewCommentEvent, state: ReviewCommentStore): ReviewCommentStore {
@@ -49,7 +60,7 @@ export function commentReducer(event: ReviewCommentEvent, state: ReviewCommentSt
           dt: event.createdAt,
           text: event.text ?? parent.comment.text,
           typeState: event.typeState === undefined ? parent.comment.typeState : event.typeState,
-          filePath: parent.comment.filePath // Preserve file path
+          filePath: parent.comment.filePath
         },
         history: parent.history.concat(parent.comment),
       };
@@ -62,7 +73,6 @@ export function commentReducer(event: ReviewCommentEvent, state: ReviewCommentSt
       const selected = comments[event.targetId];
       if (!selected) break;
 
-      // Remove from file comments mapping
       if (fileComments[selected.comment.filePath]) {
         fileComments[selected.comment.filePath].delete(event.targetId);
         if (fileComments[selected.comment.filePath].size === 0) {
@@ -79,7 +89,6 @@ export function commentReducer(event: ReviewCommentEvent, state: ReviewCommentSt
     }
     case "create": {
       if (comments[event.id] === undefined) {
-        // Initialize file comments set if needed
         if (!fileComments[event.filePath]) {
           fileComments[event.filePath] = new Set();
         }
@@ -149,7 +158,7 @@ export interface ReviewComment {
   status: ReviewCommentStatus;
   type: ReviewCommentType;
   typeState: ReviewCommentTypeState;
-  filePath: string; // Required field for file-based comments
+  filePath: string;
 }
 
 export enum ReviewCommentStatus {
@@ -165,27 +174,6 @@ export enum ReviewCommentRenderState {
 }
 
 export type ReviewCommentTypeState = unknown;
-
-export interface CodeSelection {
-  startColumn: number;
-  endColumn: number;
-  startLineNumber: number;
-  endLineNumber: number;
-}
-
-export interface ReviewComment {
-  id: string;
-  parentId?: string;
-  author: string | undefined;
-  dt: number | undefined;
-  lineNumber: number;
-  text: string;
-  selection: CodeSelection | undefined;
-  status: ReviewCommentStatus;
-  type: ReviewCommentType;
-  typeState: ReviewCommentTypeState;
-}
-
 
 export function reduceComments(
     events: ReviewCommentEvent[],
