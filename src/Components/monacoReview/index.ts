@@ -142,6 +142,7 @@ interface ReviewManagerConfigPrivate {
   setClassNames: boolean;
   verticalOffset: number;
   enableMarkdown: boolean;
+  filePath: string;
 }
 
 const defaultReviewManagerConfig: ReviewManagerConfigPrivate = {
@@ -163,6 +164,7 @@ const defaultReviewManagerConfig: ReviewManagerConfigPrivate = {
   setClassNames: true,
   verticalOffset: 0,
   enableMarkdown: false,
+  filePath: "",
 };
 
 const CONTROL_ATTR_NAME = "ReviewManagerControl";
@@ -210,15 +212,15 @@ export class ReviewManager {
   private _renderStore: Record<string, RenderStoreItem>;
 
   constructor(
-    editor: monacoEditor.editor.IStandaloneCodeEditor,
-    currentUser: string,
-    onChange?: OnActionsChanged,
-    config?: ReviewManagerConfig,
-    verbose?: boolean,
+      editor: monacoEditor.editor.IStandaloneCodeEditor,
+      currentUser: string,
+      onChange?: OnActionsChanged,
+      config?: ReviewManagerConfig,
+      verbose?: boolean,
   ) {
     this.currentUser = currentUser;
     this.editor = editor;
-    this.activeComment = undefined; // TODO - consider moving onto the store
+    this.activeComment = undefined;
     this.widgetInlineToolbar = undefined;
     this.widgetInlineCommentEditor = undefined;
     this.onChange = onChange;
@@ -228,7 +230,7 @@ export class ReviewManager {
     this.currentCommentDecorations = [];
     this.currentLineDecorationLineNumber = undefined;
     this.events = [];
-    this.store = { comments: {}, events: [] };
+    this.store = { comments: {}, events: [], fileComments: {} };
     this._renderStore = {};
 
     this.verbose = verbose === true;
@@ -455,6 +457,10 @@ export class ReviewManager {
   createInlineEditorElement(): EditorElements {
     const root = document.createElement("div");
     this.applyStyles(root, "reviewCommentEditor");
+    root.style.height = "80px"; // Fixed height for editor
+    root.style.display = "flex";
+    root.style.flexDirection = "column";
+    root.style.gap = "4px";
 
     const textarea = document.createElement("textarea");
     textarea.setAttribute(CONTROL_ATTR_NAME, "");
@@ -463,11 +469,16 @@ export class ReviewManager {
     textarea.rows = 3;
     textarea.name = "text";
     textarea.onkeydown = this.handleTextAreaKeyDown.bind(this);
+    textarea.style.flex = "1";
+    textarea.style.minHeight = "40px";
+
+    const buttonContainer = document.createElement("div");
+    buttonContainer.style.display = "flex";
+    buttonContainer.style.gap = "8px";
 
     const confirm = document.createElement("button");
     confirm.setAttribute(CONTROL_ATTR_NAME, "");
     this.applyStyles(confirm, "reviewCommentEditor.save");
-
     confirm.innerText = "placeholder add";
     confirm.onclick = this.handleAddComment.bind(this);
 
@@ -477,9 +488,11 @@ export class ReviewManager {
     cancel.innerText = "Cancel";
     cancel.onclick = this.handleCancel.bind(this);
 
+    buttonContainer.appendChild(cancel);
+    buttonContainer.appendChild(confirm);
+
     root.appendChild(textarea);
-    root.appendChild(cancel);
-    root.appendChild(confirm);
+    root.appendChild(buttonContainer);
 
     return { root, confirm, cancel, textarea };
   }
@@ -800,17 +813,62 @@ export class ReviewManager {
     return this.addEvent({ type: "delete", targetId: id });
   }
 
+  // Add method to get comments for a specific file
+  getCommentsForFile(filePath: string): ReviewCommentState[] {
+    const fileCommentIds = this.store.fileComments[filePath] || new Set();
+    return Array.from(fileCommentIds)
+        .map(id => this.store.comments[id])
+        .filter(Boolean);
+  }
+
+  clearAllComments() {
+    this.editor.changeViewZones((changeAccessor) => {
+      // Remove all existing view zones
+      for (const viewState of Object.values(this.store.comments)) {
+        const rs = this.getRenderState(viewState.comment.id);
+        if (rs.viewZoneId) {
+          changeAccessor.removeZone(rs.viewZoneId);
+        }
+      }
+    });
+
+    // Clear all decorations
+    this.currentLineDecorations = this.editor.deltaDecorations(this.currentLineDecorations, []);
+    this.currentCommentDecorations = this.editor.deltaDecorations(this.currentCommentDecorations, []);
+
+    // Reset store and state
+    this.store = { comments: {}, events: [], fileComments: {} };
+    this._renderStore = {};
+    this.activeComment = undefined;
+    this.commentHeightCache = {};
+  }
+
+  // Add method to check if a file has comments
+  hasCommentsForFile(filePath: string): boolean {
+    return Boolean(this.store.fileComments[filePath]?.size);
+  }
+
+  // Add method to get comment count for a file
+  getCommentCountForFile(filePath: string): number {
+    return this.store.fileComments[filePath]?.size || 0;
+  }
+
   addComment(lineNumber: number, text: string, selection?: CodeSelection): ReviewCommentEvent {
     const event: ProposedReviewCommentEvent =
-      this.editorMode === EditorMode.editComment && this.activeComment?.id
-        ? { type: "edit", text, targetId: this.activeComment.id }
-        : {
-            type: "create",
-            text,
-            lineNumber,
-            selection,
-            targetId: this.activeComment?.id,
-          };
+        this.editorMode === EditorMode.editComment && this.activeComment?.id
+            ? {
+              type: "edit",
+              text,
+              targetId: this.activeComment.id,
+            }
+            : {
+              type: "create",
+              text,
+              lineNumber,
+              selection,
+              targetId: this.activeComment?.id,
+              filePath: this.config.filePath, // Include file path in new comments
+            };
 
     return this.addEvent(event);
   }
@@ -821,9 +879,8 @@ export class ReviewManager {
       createdBy: this.currentUser,
       createdAt: this.getDateTimeNow(),
       id: uuid.v4(),
+      filePath: this.config.filePath, // Ensure file path is included
     };
-
-    console.debug("[addEvent]", populatedEvent);
 
     this.events.push(populatedEvent);
     this.store = commentReducer(populatedEvent, this.store);
@@ -878,56 +935,55 @@ export class ReviewManager {
     this.editor.changeViewZones((changeAccessor) => {
       const lineNumbers: Record<number, CodeSelection | undefined> = {};
 
-      if (this.editorMode !== EditorMode.toolbar) {
-        // This creates a blank section viewZone that makes space for the interactive text file for editing
-        if (this.editId) {
-          changeAccessor.removeZone(this.editId);
-        }
+      // Handle edit mode view zone
+      if (this.editId) {
+        changeAccessor.removeZone(this.editId);
+        this.editId = "";
+      }
 
+      if (this.editorMode !== EditorMode.toolbar) {
         const node = document.createElement("div");
-        // node.style.backgroundColor = "orange";
+        node.style.height = "80px"; // Fixed height for edit zone
         const afterLineNumber = this.getActivePosition();
         if (afterLineNumber !== undefined) {
           this.editId = changeAccessor.addZone({
             afterLineNumber,
-            heightInPx: 100,
+            heightInPx: 80, // Match the height of the node
             domNode: node,
             suppressMouseDown: true,
           });
         }
-      } else if (this.editId) {
-        changeAccessor.removeZone(this.editId);
       }
 
+      // Handle deleted comments
       for (const cid of Array.from(this.store.deletedCommentIds || [])) {
         const viewZoneId = this.getRenderState(cid).viewZoneId;
         if (viewZoneId) {
           changeAccessor.removeZone(viewZoneId);
-          this.verbose && console.debug("[monaco-review] Zone.Delete", viewZoneId);
+          delete this._renderStore[cid];
         }
       }
       this.store.deletedCommentIds = undefined;
 
+      // Mark dirty comments
       for (const cid of Array.from(this.store.dirtyCommentIds || [])) {
         this.getRenderState(cid).renderStatus = ReviewCommentRenderState.dirty;
       }
       this.store.dirtyCommentIds = undefined;
 
+      // Process all comments
       for (const item of this.iterateComments()) {
         const rs = this.getRenderState(item.state.comment.id);
 
+        // Remove hidden zones
         if (rs.renderStatus === ReviewCommentRenderState.hidden && rs.viewZoneId) {
-          this.verbose && console.debug("[monaco-review] Zone.Hidden", item.state.comment.id);
-
           changeAccessor.removeZone(rs.viewZoneId);
           rs.viewZoneId = undefined;
-
           continue;
         }
 
+        // Remove dirty zones
         if (rs.renderStatus === ReviewCommentRenderState.dirty && rs.viewZoneId) {
-          this.verbose && console.debug("[monaco-review] Zone.Dirty", item.state.comment.id);
-
           changeAccessor.removeZone(rs.viewZoneId);
           rs.viewZoneId = undefined;
           rs.renderStatus = ReviewCommentRenderState.normal;
@@ -937,14 +993,12 @@ export class ReviewManager {
           lineNumbers[item.state.comment.lineNumber] = item.state.comment.selection;
         }
 
+        // Create new zones
         if (rs.viewZoneId == undefined) {
-          this.verbose && console.debug("[monaco-review] Zone.Create", item.state.comment.id);
-
           const isActive = this.activeComment == item.state.comment;
-
           const domNode = this.config.renderComment
-            ? this.config.renderComment(isActive, item)
-            : this.renderComment(isActive, item);
+              ? this.config.renderComment(isActive, item)
+              : this.renderComment(isActive, item);
 
           const heightInPx = this.measureHeighInPx(item, domNode);
 
@@ -952,16 +1006,16 @@ export class ReviewManager {
             afterLineNumber: item.state.comment.lineNumber,
             heightInPx,
             domNode,
-            suppressMouseDown: true, // This stops focus being lost the editor - meaning keyboard shortcuts keeps working
+            suppressMouseDown: true,
           });
         }
       }
 
+      // Update decorations
       if (this.config.showInRuler) {
-        const decorators = [];
-        for (const [ln, selection] of Object.entries(lineNumbers)) {
-          decorators.push({
-            range: new monacoWindow.monaco.Range(ln, 0, ln, 0),
+        const decorators = Object.entries(lineNumbers).map(([ln, selection]) => {
+          const decorations = [{
+            range: new monacoWindow.monaco.Range(parseInt(ln), 0, parseInt(ln), 0),
             options: {
               isWholeLine: true,
               overviewRuler: {
@@ -970,31 +1024,36 @@ export class ReviewManager {
                 position: 1,
               },
             },
-          });
+          }];
 
           if (selection) {
-            decorators.push({
+            decorations.push({
               range: new monacoWindow.monaco.Range(
-                selection.startLineNumber,
-                selection.startColumn,
-                selection.endLineNumber,
-                selection.endColumn,
+                  selection.startLineNumber,
+                  selection.startColumn,
+                  selection.endLineNumber,
+                  selection.endColumn,
               ),
               options: {
                 className: "reviewComment selection",
               },
             });
           }
-        }
 
-        this.currentCommentDecorations = this.editor.deltaDecorations(this.currentCommentDecorations, decorators);
+          return decorations;
+        }).flat();
+
+        this.currentCommentDecorations = this.editor.deltaDecorations(
+            this.currentCommentDecorations,
+            decorators
+        );
       }
     });
   }
 
   private measureHeighInPx(item: ReviewCommentIterItem, domNode: HTMLElement): number {
     const cacheKey = this.getHeightCacheKey(item);
-    // attach to dom to calculate height
+
     if (this.commentHeightCache[cacheKey] === undefined) {
       const container = document.createElement("div");
       container.style.position = "absolute";
@@ -1005,12 +1064,10 @@ export class ReviewManager {
       document.body.removeChild(container);
       container.removeChild(domNode);
 
-      this.commentHeightCache[cacheKey] = height;
-
-      console.debug("[monaco-review] calculated height", height);
-    } else {
-      console.debug("[monaco-review] using cached height", cacheKey, this.commentHeightCache[item.state.comment.id]);
+      // Add minimal padding
+      this.commentHeightCache[cacheKey] = height + 4;
     }
+
     return this.commentHeightCache[cacheKey];
   }
 
@@ -1019,26 +1076,40 @@ export class ReviewManager {
   }
 
   private renderComment(isActive: boolean, item: ReviewCommentIterItem): HTMLElement {
-    const rootNode = this.createElement("", "reviewComment"); // .${isActive ? "active" : "inactive"}`);
+    const rootNode = this.createElement("", "reviewComment");
     rootNode.style.marginLeft = this.config.commentIndent * (item.depth + 1) + this.config.commentIndentOffset + "px";
     rootNode.style.backgroundColor = this.getThemedColor("editor.selectionHighlightBackground");
+    rootNode.style.padding = "2px";
+    rootNode.style.display = "flex";
+    rootNode.style.flexDirection = "column";
+    rootNode.style.gap = "2px";
 
     const domNode = this.createElement("", `reviewComment.${isActive ? "active" : "inactive"}`);
     rootNode.appendChild(domNode);
 
-    // // For Debug - domNode.appendChild(this.createElement(`${item.state.comment.id}`, 'reviewComment id'))
-    domNode.appendChild(this.createElement(`${item.state.comment.author || " "} at `, "reviewComment.author"));
+    const headerNode = this.createElement("", "reviewComment.header");
+    headerNode.style.display = "flex";
+    headerNode.style.gap = "4px";
+    headerNode.style.alignItems = "center";
+
+    headerNode.appendChild(this.createElement(`${item.state.comment.author || " "} at `, "reviewComment.author"));
     if (item.state.comment.dt) {
-      domNode.appendChild(this.createElement(this.formatDate(item.state.comment.dt), "reviewComment.dt"));
+      headerNode.appendChild(this.createElement(this.formatDate(item.state.comment.dt), "reviewComment.dt"));
     }
     if (item.state.history.length > 1) {
-      domNode.appendChild(
-        this.createElement(`(Edited ${item.state.history.length - 1} times)`, "reviewComment.history"),
+      headerNode.appendChild(
+          this.createElement(`(Edited ${item.state.history.length - 1} times)`, "reviewComment.history"),
       );
     }
+    if (item.state.comment.filePath) {
+      headerNode.appendChild(this.createElement(` in ${item.state.comment.filePath}`, "reviewComment.filePath"));
+    }
+
+    domNode.appendChild(headerNode);
 
     const textNode = this.createElement("", "reviewComment.text", "div");
     textNode.style.width = "70vw";
+    textNode.style.margin = "2px 0";
     if (this.config.enableMarkdown) {
       textNode.innerHTML = convertMarkdownToHTML(item.state.comment.text);
     } else {

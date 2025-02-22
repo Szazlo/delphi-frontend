@@ -57,6 +57,24 @@ function Results() {
     const commentsRef = useRef<Record<string, any>>({});
     const [comments, setComments] = useState<ReviewCommentState[]>([]);
 
+    const handleEditorMount = (editor: monacoEditor.editor.IStandaloneCodeEditor) => {
+        setCurrentEditor(editor);
+
+        // Initialize review manager with default file path
+        if (selectedFile) {
+            reviewManager = createReviewManager(
+                editor,
+                localStorage.getItem("name") || "Unknown",
+                commentsRef.current[selectedFile] || [],
+                (updatedComments) => {
+                    commentsRef.current[selectedFile] = updatedComments;
+                    renderComments();
+                },
+                { filePath: selectedFile }
+            );
+        }
+    };
+
     const fetchResults = async () => {
         try {
             const userId = localStorage.getItem('userId')
@@ -194,12 +212,41 @@ function Results() {
         if (zipInstance) {
             const file = zipInstance.file(filePath);
             if (file) {
-                const fileContent = await file.async('text');
-                setSelectedFileContent(fileContent);
+                const content = await file.async("text");
+                setSelectedFileContent(content);
                 setSelectedFile(filePath);
+
+                if (currentEditor) {
+                    // Clean up existing review manager if it exists
+                    if (reviewManager) {
+                        reviewManager.clearAllComments();
+                    }
+
+                    // Initialize new ReviewManager for the selected file
+                    reviewManager = createReviewManager(
+                        currentEditor,
+                        localStorage.getItem("name") || "Unknown",
+                        commentsRef.current[filePath] || [], // Use empty array if no comments exist
+                        (updatedComments) => {
+                            commentsRef.current[filePath] = updatedComments;
+                            renderComments();
+                        },
+                        { filePath }
+                    );
+                }
             } else {
-                console.error('File not found in ZIP:', filePath);
+                setSelectedFileContent(null);
+                setSelectedFile(null);
             }
+        }
+    };
+
+    const renderComments = () => {
+        if (selectedFile && reviewManager) {
+            const fileComments = reviewManager.getCommentsForFile(selectedFile);
+            setComments(fileComments);
+        } else {
+            setComments([]);
         }
     };
 
@@ -252,29 +299,6 @@ function Results() {
                 return 'plaintext'; // Default to plain text
         }
     };
-
-    const renderComments = () => {
-        setComments(reviewManager ? Object.values(reviewManager.store.comments) : []);
-    };
-
-    useEffect(() => {
-        if (currentEditor && selectedFile) {
-            if (!commentsRef.current[selectedFile]) {
-                commentsRef.current[selectedFile] = [];
-            }
-            reviewManager = createReviewManager(
-                currentEditor,
-                localStorage.getItem("name") || "Unknown",
-                commentsRef.current[selectedFile],
-                (updatedComments) => {
-                    commentsRef.current[selectedFile] = updatedComments;
-                    renderComments();
-                    console.log("Updated Comments", updatedComments);
-                },
-                { filePath: selectedFile } // Pass the correct configuration object
-            );
-        }
-    }, [currentEditor, selectedFile]);
 
     useEffect(() => {
         if (id) {
@@ -390,7 +414,7 @@ function Results() {
                                                         minimap: {enabled: false},
                                                         scrollBeyondLastLine: false,
                                                     }}
-                                                    onMount={(editor) => setCurrentEditor(editor)}
+                                                    onMount={handleEditorMount}
                                                     onChange={renderComments}
                                                     theme="vs-dark"
                                                 />
