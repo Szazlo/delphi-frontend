@@ -220,6 +220,7 @@ function Results() {
                     // Clean up existing review manager if it exists
                     if (reviewManager) {
                         reviewManager.clearAllComments();
+                        reviewManager.clearAllViewZonesAndDecorations();
                     }
 
                     // Initialize new ReviewManager for the selected file

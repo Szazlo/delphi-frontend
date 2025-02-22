@@ -742,6 +742,7 @@ export class ReviewManager {
   }
 
   setEditorMode(mode: EditorMode, why: string = "") {
+    this.clearAllViewZonesAndDecorations();
     const activeComment = mode === EditorMode.insertComment ? undefined : this.activeComment;
 
     this.editorMode = this.config.readOnly ? EditorMode.toolbar : mode;
@@ -854,6 +855,7 @@ export class ReviewManager {
   }
 
   addComment(lineNumber: number, text: string, selection?: CodeSelection): ReviewCommentEvent {
+    this.clearAllViewZonesAndDecorations();
     const event: ProposedReviewCommentEvent =
         this.editorMode === EditorMode.editComment && this.activeComment?.id
             ? {
@@ -871,6 +873,22 @@ export class ReviewManager {
             };
 
     return this.addEvent(event);
+  }
+
+  clearAllViewZonesAndDecorations() {
+    this.editor.changeViewZones((changeAccessor) => {
+      // Remove only the view zones causing blank spaces
+      for (const viewState of Object.values(this.store.comments)) {
+        const rs = this.getRenderState(viewState.comment.id);
+        if (rs.viewZoneId && rs.renderStatus !== ReviewCommentRenderState.normal) {
+          changeAccessor.removeZone(rs.viewZoneId);
+          rs.viewZoneId = undefined;
+        }
+      }
+    });
+
+    // Clear only the decorations causing blank spaces
+    this.currentLineDecorations = this.editor.deltaDecorations(this.currentLineDecorations, []);
   }
 
   private addEvent(event: ProposedReviewCommentEvent): ReviewCommentEvent {
@@ -943,7 +961,7 @@ export class ReviewManager {
 
       if (this.editorMode !== EditorMode.toolbar) {
         const node = document.createElement("div");
-        node.style.height = "80px"; // Fixed height for edit zone
+        node.style.height = "60px"; // Fixed height for edit zone
         const afterLineNumber = this.getActivePosition();
         if (afterLineNumber !== undefined) {
           this.editId = changeAccessor.addZone({
