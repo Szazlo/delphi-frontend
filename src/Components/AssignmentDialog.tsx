@@ -5,7 +5,6 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
     Collapsible,
@@ -34,9 +33,16 @@ interface AssignmentDialogProps {
     groupId?: string;
     assignment?: Assignment;
     onSave: (assignment: Assignment, group_id: string) => void;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
 }
 
-const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment, onSave }) => {
+interface SeriesSettings {
+    count: number | null;
+    dateOffset: number | null;
+}
+
+const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment, onSave, isOpen, onOpenChange }) => {
     const [formData, setFormData] = useState<Assignment>({
         dueDate: assignment?.dueDate || null,
         id: assignment?.id || '',
@@ -47,9 +53,11 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
         memoryLimit: assignment?.memoryLimit || 500,
         maxScore: assignment?.maxScore || 0,
     });
-    const [series, setSeries] = useState<number | null>(null);
+    const [seriesSettings, setSeriesSettings] = useState<SeriesSettings>({
+        count: null,
+        dateOffset: null,
+    });
     const [groups, setGroups] = useState<Group[]>([]);
-    const [isOpen, setIsOpen] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -96,16 +104,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
 
     const handleSubmit = async () => {
         const token = localStorage.getItem('token');
-        const formattedDueDate = formData.dueDate ? new Date(formData.dueDate).toISOString().replace('T', ' ').replace('Z', '') : null;
-        const formattedData = {
-            title: formData.title,
-            description: formData.description,
-            time_limit: formData.timeLimit,
-            memory_limit: formData.memoryLimit,
-            due_date: formattedDueDate,
-            max_score: formData.maxScore,
-            group_id: formData.group_id,
-        };
+        const baseDate = formData.dueDate ? new Date(formData.dueDate) : null;
 
         const createAssignment = async (data: any) => {
             const url = assignment ? `http://localhost:8080/api/assignments/${assignment.id}` : 'http://localhost:8080/api/assignments';
@@ -125,20 +124,41 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
         };
 
         try {
-            if (series && series > 1) {
-                for (let i = 1; i <= series; i++) {
-                    const dataWithSeries = {
-                        ...formattedData,
+            if (seriesSettings.count && seriesSettings.count > 1) {
+                for (let i = 1; i <= seriesSettings.count; i++) {
+                    let assignmentDate = baseDate;
+                    if (baseDate && seriesSettings.dateOffset && i > 1) {
+                        assignmentDate = new Date(baseDate);
+                        assignmentDate.setDate(baseDate.getDate() + (seriesSettings.dateOffset * (i - 1)));
+                    }
+
+                    const formattedData = {
                         title: `${formData.title} - ${i}`,
+                        description: formData.description,
+                        time_limit: formData.timeLimit,
+                        memory_limit: formData.memoryLimit,
+                        due_date: assignmentDate ? assignmentDate.toISOString().replace('T', ' ').replace('Z', '') : null,
+                        max_score: formData.maxScore,
+                        group_id: formData.group_id,
                     };
-                    const data = await createAssignment(dataWithSeries);
+
+                    const data = await createAssignment(formattedData);
                     onSave(data, formData.group_id);
                 }
             } else {
+                const formattedData = {
+                    title: formData.title,
+                    description: formData.description,
+                    time_limit: formData.timeLimit,
+                    memory_limit: formData.memoryLimit,
+                    due_date: baseDate ? baseDate.toISOString().replace('T', ' ').replace('Z', '') : null,
+                    max_score: formData.maxScore,
+                    group_id: formData.group_id,
+                };
                 const data = await createAssignment(formattedData);
                 onSave(data, formData.group_id);
             }
-            setIsOpen(false);
+            onOpenChange(false);
         } catch (error) {
             setError((error as Error).message);
         }
@@ -158,16 +178,11 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
         if (!response.ok) {
             throw new Error('Failed to delete assignment');
         }
-        setIsOpen(false);
+        onOpenChange(false);
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <button className="bg-white bg-opacity-10 hover:bg-background-contrast border-0 text-white font-bold py-2 px-4 rounded" onClick={() => setIsOpen(true)}>
-                    {assignment ? 'Edit Assignment' : 'Create an Assignment'}
-                </button>
-            </DialogTrigger>
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle
@@ -263,14 +278,44 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
                     <CollapsibleContent>
                         <div className="bg-white bg-opacity-5 p-4 rounded shadow-lg text-white">
                             <p className="text-gray-300 w-full p-2 text-sm font-semibold">
-                                Providing a number here will create the number duplicates with the same properties.<br/>The title for each will be the provided title with "- n" appended to it i.e. Assignment - 1.
+                                Create multiple assignments with incremental titles and due dates.
                             </p>
-                            <input type="number"
-                                   placeholder="Number of assignments"
-                                   className="mb-2 p-2 border rounded w-full bg-transparent border-gray-600"
-                                   onChange={(e) => setSeries(e.target.value ? parseInt(e.target.value) : null)}
-                                   min={2}
-                            />
+                            <div className="space-y-2">
+                                <input
+                                    type="number"
+                                    placeholder="Number of assignments"
+                                    className="mb-2 p-2 border rounded w-full bg-transparent border-gray-600"
+                                    onChange={(e) => setSeriesSettings(prev => ({
+                                        ...prev,
+                                        count: e.target.value ? parseInt(e.target.value) : null
+                                    }))}
+                                    min={2}
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="Days between assignments"
+                                    className="mb-2 p-2 border rounded w-full bg-transparent border-gray-600"
+                                    onChange={(e) => setSeriesSettings(prev => ({
+                                        ...prev,
+                                        dateOffset: e.target.value ? parseInt(e.target.value) : null
+                                    }))}
+                                    min={1}
+                                />
+                                {formData.dueDate && seriesSettings.count && seriesSettings.dateOffset && (
+                                    <div className="text-gray-300 text-sm">
+                                        <p>Preview of due dates:</p>
+                                        {Array.from({ length: seriesSettings.count }).map((_, i) => {
+                                            const date = new Date(formData.dueDate!);
+                                            date.setDate(date.getDate() + (seriesSettings.dateOffset! * i));
+                                            return (
+                                                <p key={i}>
+                                                    Assignment {i + 1}: {date.toLocaleDateString()}
+                                                </p>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </CollapsibleContent>
                 </Collapsible>

@@ -13,12 +13,13 @@ const Sidebar = () => {
         { label: "Groups", path: "/groups" },
         { label: "Assignments", path: "/assignments" },
         { label: "Results", path: "/results" },
+        { label: "Requests", path: "/requests" },
         { label: "Settings", path: "/settings" },
     ];
 
-    if (roles?.includes('admin') || roles?.includes('manager')) {
-        navItems.splice(1, 0, { label: "Requests", path: "/requests" });
-    }
+    // if (roles?.includes('admin') || roles?.includes('manager')) {
+    //     navItems.splice(1, 0, { label: "Requests", path: "/requests" });
+    // }
 
     const handleLogout = async () => {
         await logout();

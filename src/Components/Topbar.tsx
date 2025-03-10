@@ -11,7 +11,8 @@ function Topbar() {
                 <img
                     src={profilePicture || 'https://placehold.co/150'}
                     alt="User Profile"
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-10 h-10 rounded-full object-cover hover:cursor-pointer"
+                    onClick={() => window.location.href = '/settings'}
                 />
             </div>
         </div>

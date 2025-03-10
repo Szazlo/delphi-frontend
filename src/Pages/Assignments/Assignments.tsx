@@ -6,6 +6,7 @@ import AssignmentCard from "@/Components/AssignmentCard.tsx";
 import AssignmentDialog from "@/Components/AssignmentDialog.tsx";
 import FileUploadDialogue from "@/Components/FileUploadDialogue.tsx";
 import ReactMarkdown from "react-markdown";
+import TestCaseManager from '@/Components/TestCaseManager.tsx';
 
 interface Group {
     id: string;
@@ -105,7 +106,7 @@ function Assignments() {
 
     const handleSelectAssignment = (assignment: Assignment) => {
         setSelectedAssignment(assignment);
-        setShowAssignmentDialog(true);
+        // setShowAssignmentDialog(true);
         navigate(`/assignments/${assignment.id}`);
     };
 
@@ -158,9 +159,9 @@ function Assignments() {
     return (
         <div className="flex w-screen">
             <Sidebar />
-            <div className="flex flex-col w-full">
+            <div className="flex flex-col w-full h-screen">
                 <Topbar />
-                <div className="p-4">
+                <div className="p-4 flex-1 overflow-hidden">
                     {id && selectedAssignment ? (
                         <div className="flex flex-col">
                             <div className="flex justify-end">
@@ -168,20 +169,31 @@ function Assignments() {
                                     groupId={selectedAssignment.group_id}
                                     assignment={selectedAssignment}
                                     onSave={handleSaveAssignment}
+                                    isOpen={showAssignmentDialog}
+                                    onOpenChange={setShowAssignmentDialog}
                                 />
                             </div>
                             <div className="flex justify-between items-center">
                                 <h1 className="text-2xl text-gray-300">{selectedAssignment.title}</h1>
                                 <div className="flex flex-col items-end">
+                                    <button
+                                        onClick={() => setShowAssignmentDialog(true)}
+                                        className="text-white font-bold py-1 px-2 rounded mt-2 bg-white bg-opacity-10 hover:bg-opacity-20 transition duration-300"
+                                    >
+                                        Manage
+                                    </button>
                                     <p className="text-gray-300">Marks Available: {selectedAssignment.maxScore}</p>
                                     {selectedAssignment.dueDate && (
-                                        <p className="text-gray-300">Due Date: {new Date(selectedAssignment.dueDate).toLocaleDateString()}</p>
+                                        <p className="text-gray-300">Due
+                                            Date: {new Date(selectedAssignment.dueDate).toLocaleDateString()}</p>
                                     )}
                                 </div>
                             </div>
-                            <p className="text-gray-300">Time Limit: {selectedAssignment.timeLimit}s | Memory Limit: {selectedAssignment.memoryLimit || "n/a "}KB</p>
+                            <p className="text-gray-300">Time Limit: {selectedAssignment.timeLimit}s | Memory
+                                Limit: {selectedAssignment.memoryLimit || "n/a "}KB</p>
                             <hr className="my-4 border-gray-600" />
                             <ReactMarkdown className="text-gray-300">{selectedAssignment.description}</ReactMarkdown>
+                            <TestCaseManager assignmentId={selectedAssignment.id} />
                             <div className="flex justify-end my-4">
                                 <div className="flex flex-col items-end">
                                     {hasSubmission(selectedAssignment.id) && (
@@ -201,33 +213,52 @@ function Assignments() {
                             </div>
                         </div>
                     ) : (
-                        <>
-                            <div className="flex justify-between items-center my-4">
-                                <h1 className="text-2xl text-gray-300">Assignments</h1>
-                                <AssignmentDialog groupId={id} onSave={(assignment: Assignment, groupId: string) => {
-                                    if (groupId === id) {
-                                        setAssignments([...assignments, assignment]);
-                                    }
-                                }} />
+                            <div className="flex flex-col h-full"> {/* Full height container */}
+                                <div className="flex justify-between items-center mb-4">
+                                    <h1 className="text-2xl text-gray-300">Assignments</h1>
+                                    <button
+                                        onClick={() => setShowAssignmentDialog(true)}
+                                        className="bg-success hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded"
+                                    >
+                                        + New Assignment
+                                    </button>
+                                </div>
+
+                                {/* Scrollable container for assignments list */}
+                                <div className="overflow-y-auto flex-1">
+                                    <ul className="space-y-4 pb-4">
+                                        {assignments.length > 0 ? (
+                                            assignments.map((assignment) => (
+                                                <AssignmentCard
+                                                    key={assignment.id}
+                                                    title={assignment.title}
+                                                    dueDate={assignment.dueDate}
+                                                    maxScore={assignment.maxScore}
+                                                    onClick={() => handleSelectAssignment(assignment)}
+                                                    onClone={() => handleCloneAssignment(assignment)}
+                                                    assignment={assignment}
+                                                    groupId={assignment.group_id}
+                                                    onSave={handleSaveAssignment}
+                                                />
+                                            ))
+                                        ) : (
+                                            <p className="text-gray-300">There are no assignments currently.</p>
+                                        )}
+                                    </ul>
+                                </div>
+
+                                {/* Move dialog outside of the flex layout */}
+                                <AssignmentDialog
+                                    groupId={id}
+                                    onSave={(assignment: Assignment, groupId: string) => {
+                                        if (groupId === id) {
+                                            setAssignments([...assignments, assignment]);
+                                        }
+                                    }}
+                                    isOpen={showAssignmentDialog}
+                                    onOpenChange={setShowAssignmentDialog}
+                                />
                             </div>
-                            <ul className="space-y-4 h-screen overflow-y-scroll">
-                                {assignments.length > 0 ? (
-                                    assignments.map((assignment) => (
-                                        <AssignmentCard
-                                            key={assignment.id}
-                                            title={assignment.title}
-                                            dueDate={assignment.dueDate}
-                                            maxScore={assignment.maxScore}
-                                            onClick={() => handleSelectAssignment(assignment)}
-                                            onClone={() => handleCloneAssignment(assignment)}
-                                        />
-                                    ))
-                                ) : (
-                                    <p className="text-gray-300">There are no assignments currently.</p>
-                                )}
-                                <div className="h-40" />
-                            </ul>
-                        </>
                     )}
                 </div>
             </div>

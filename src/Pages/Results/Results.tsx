@@ -27,6 +27,7 @@ interface Result {
     assignment: {
         title: string;
     };
+    testResults: string;
 }
 
 interface Manager {
@@ -67,6 +68,10 @@ function Results() {
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
     const commentsRef = useRef<Record<string, any>>({});
     const [comments, setComments] = useState<ReviewCommentState[]>([]);
+
+    const [reviewRequestType, setReviewRequestType] = useState<'owner' | 'random'>('owner');
+    const [randomReviewer, setRandomReviewer] = useState<Manager | null>(null);
+    const [group, setGroup] = useState<{id: string; name: string; owner: string; members: string[]} | null>(null);
 
     const handleEditorMount = (editor: monacoEditor.editor.IStandaloneCodeEditor) => {
         setCurrentEditor(editor);
@@ -183,26 +188,142 @@ function Results() {
         }
     }
 
-    const assignReviewer = async (submissionId: string, reviewerId: string) => {
+    const fetchGroupData = async (submissionId: string) => {
         try {
-            const token = localStorage.getItem('token')
+            const token = localStorage.getItem('token');
+
+            // First, get the submission details
+            const submissionResponse = await fetch(`http://localhost:8080/api/submissions/${submissionId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const submissionData = await submissionResponse.json();
+            if (!submissionResponse.ok || !submissionData.assignment?.id) {
+                console.error('Failed to get submission or submission has no assignment');
+                return;
+            }
+
+            // Now get the assignment to find the group ID
+            const assignmentResponse = await fetch(`http://localhost:8080/api/assignments/${submissionData.assignment.id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const assignmentData = await assignmentResponse.json();
+            if (!assignmentResponse.ok || !assignmentData.group.id){
+                console.error('Failed to get assignment or assignment has no group');
+                return;
+            }
+
+            // Now we can fetch the group data
+            const groupResponse = await fetch(`http://localhost:8080/api/groups/${assignmentData.group.id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (!groupResponse.ok) {
+                throw new Error('Failed to fetch group data');
+            }
+
+            const groupData = await groupResponse.json();
+
+            // And fetch the group members
+            const membersResponse = await fetch(`http://localhost:8080/api/groups/${assignmentData.group.id}/users`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (!membersResponse.ok) {
+                throw new Error('Failed to fetch group members');
+            }
+
+            const members = await membersResponse.json();
+
+            setGroup({
+                id: assignmentData.groupId,
+                name: groupData.name,
+                owner: groupData.owner,
+                members: members.map((user: any) => user.id)
+            });
+        } catch (error) {
+            console.error('Error fetching group data:', error);
+        }
+    };
+
+    const assignReviewer = async (submissionId: string, reviewerId?: string) => {
+        try {
+            const token = localStorage.getItem('token');
+
+            // If no specific reviewer ID is provided and random type is selected,
+            // pick a random group member (excluding the current user)
+            let actualReviewerId = reviewerId;
+            if (reviewRequestType === 'random' && !reviewerId && group?.members.length) {
+                const currentUserId = localStorage.getItem('userId');
+                const availableMembers = group.members.filter(id => id !== currentUserId);
+
+                if (availableMembers.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableMembers.length);
+                    actualReviewerId = availableMembers[randomIndex];
+                }
+            }
+
+            if (!actualReviewerId) {
+                console.error('No reviewer ID available');
+                return;
+            }
+
             const response = await fetch(`http://localhost:8080/api/submissions/${submissionId}/addreviewer`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     Authorization: `Bearer ${token}`
                 },
-                body: `reviewerId=${reviewerId}`
-            })
+                body: `reviewerId=${actualReviewerId}`
+            });
+
             if (response.status === 200) {
-                setReviewerAssigned(true)
+                setReviewerAssigned(true);
+
+                if (reviewRequestType === 'random') {
+                    // Try to find user details from API if not in managers list
+                    try {
+                        const userResponse = await fetch(`http://localhost:8080/api/auth/user/${actualReviewerId}`, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`
+                            }
+                        });
+
+                        if (userResponse.ok) {
+                            const userData = await userResponse.json();
+                            setRandomReviewer(userData);
+                        } else {
+                            // Fallback to managers list
+                            const randomReviewerData = managers.find(m => m.id === actualReviewerId);
+                            setRandomReviewer(randomReviewerData || null);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching user details:', error);
+                        const randomReviewerData = managers.find(m => m.id === actualReviewerId);
+                        setRandomReviewer(randomReviewerData || null);
+                    }
+                }
             } else {
-                console.error('Error assigning reviewer:', response)
+                console.error('Error assigning reviewer:', response);
             }
         } catch (error) {
-            console.error('Error assigning reviewer:', error)
+            console.error('Error assigning reviewer:', error);
         }
-    }
+    };
 
     const fetchComments = async (submissionId: string) => {
         try {
@@ -401,12 +522,14 @@ function Results() {
 
     useEffect(() => {
         if (id) {
-            fetchSpecificResult(id)
+            fetchSpecificResult(id);
+            fetchReviewerStatus(id);
+            fetchGroupData(id);
         } else {
-            fetchResults()
+            fetchResults();
         }
-        fetchManagers()
-    }, [id])
+        fetchManagers();
+    }, [id]);
 
     useEffect(() => {
         if (id) {
@@ -444,6 +567,56 @@ function Results() {
         const date = new Date(timestamp)
         return date.toLocaleString()
     }
+
+    const renderTestResults = () => {
+        if (!specificResult || !specificResult.testResults) {
+            return null;
+        }
+
+        try {
+            const testResults = JSON.parse(specificResult.testResults);
+            if (!Array.isArray(testResults) || testResults.length === 0) {
+                return <p className="text-gray-500">No test results available.</p>;
+            }
+
+            return (
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableCaption>Test Results</TableCaption>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Input</TableHead>
+                                <TableHead>Expected</TableHead>
+                                <TableHead>Actual</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Memory</TableHead>
+                                <TableHead>Runtime</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {testResults.map((test, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>{test.input}</TableCell>
+                                    <TableCell>{test.expected}</TableCell>
+                                    <TableCell>{test.actual}</TableCell>
+                                    <TableCell>
+                  <span className={test.passed ? "text-green-500" : "text-red-500"}>
+                    {test.passed ? "Passed" : "Failed"}
+                  </span>
+                                    </TableCell>
+                                    <TableCell>{test.memory} KB</TableCell>
+                                    <TableCell>{test.runtime} ms</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            );
+        } catch (error) {
+            console.error("Error parsing test results:", error);
+            return <p className="text-red-500">Error displaying test results.</p>;
+        }
+    };
 
     return (
         <>
@@ -499,7 +672,8 @@ function Results() {
                                     <h3 className="text-lg">Your project</h3>
                                     <div className="flex bg-white bg-opacity-5 rounded-md shadow-md">
                                         <div className="flex flex-col w-1/4 p-4 bg-white bg-opacity-5">
-                                            <div className="overflow-auto h-96">{fileTree && renderFileTree(fileTree)}</div>
+                                            <div
+                                                className="overflow-auto h-96">{fileTree && renderFileTree(fileTree)}</div>
                                         </div>
                                         <div className="w-3/4 p-4">
                                             {selectedFileContent ? (
@@ -524,29 +698,73 @@ function Results() {
                                         </div>
                                     </div>
                                 </div>
+                                <div>
+                                    <h3 className="text-lg">Test Results</h3>
+                                    <div className="bg-white bg-opacity-5 rounded-md shadow-md p-4">
+                                        {renderTestResults()}
+                                    </div>
+                                </div>
                                 <div className="flex flex-col">
                                     <h3 className="text-lg">Request peer review</h3>
                                     {reviewerAssigned ? (
-                                        <p className="text-sm text-green-500">A reviewer has already been assigned to this submission.</p>
+                                        <p className="text-sm text-green-500">
+                                            A reviewer has been assigned to this submission.
+                                            {randomReviewer && reviewRequestType === 'random' && (
+                                                <span> Random reviewer selected: {randomReviewer.firstName} {randomReviewer.lastName}</span>
+                                            )}
+                                        </p>
                                     ) : (
                                         <>
-                                            <ReviewerCombobox
-                                                managers={managers}
-                                                selectedReviewer={selectedReviewer}
-                                                setSelectedReviewer={setSelectedReviewer}
-                                            />
-                                            <button
-                                                className="bg-gradient-to-r from-blue-500 to-pink-500 text-white px-4 py-2 rounded-lg mt-4 w-36"
-                                                onClick={() => {
-                                                    if (selectedReviewer) {
-                                                        assignReviewer(id!, selectedReviewer.id)
-                                                    } else {
-                                                        console.log('Please select a reviewer');
-                                                    }
-                                                }}
-                                            >
-                                                Send Request
-                                            </button>
+                                            <div className="flex space-x-4 mb-4">
+                                                <div
+                                                    className={`cursor-pointer p-2 rounded-md ${reviewRequestType === 'owner' ? 'bg-blue-500' : 'bg-white bg-opacity-10'}`}
+                                                    onClick={() => setReviewRequestType('owner')}
+                                                >
+                                                    <span>Group Owner</span>
+                                                </div>
+                                                <div
+                                                    className={`cursor-pointer p-2 rounded-md ${reviewRequestType === 'random' ? 'bg-blue-500' : 'bg-white bg-opacity-10'}`}
+                                                    onClick={() => setReviewRequestType('random')}
+                                                >
+                                                    <span>Random Group Member</span>
+                                                </div>
+                                            </div>
+
+                                            {reviewRequestType === 'owner' ? (
+                                                <>
+                                                    <p className="text-sm text-gray-400 mb-2">
+                                                        {group ? `Request review from group owner${group.owner === localStorage.getItem('userId') ? ' (You)' : ''}` : 'Loading group information...'}
+                                                    </p>
+                                                    <button
+                                                        className="bg-gradient-to-r from-blue-500 to-pink-500 text-white px-2 py-1 rounded-lg mt-2 w-36"
+                                                        onClick={() => {
+                                                            if (group) {
+                                                                assignReviewer(id!, group.owner);
+                                                            }
+                                                        }}
+                                                        disabled={!group || group.owner === localStorage.getItem('userId')}
+                                                    >
+                                                        Request Owner Review
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-sm text-gray-400 mb-2">
+                                                        {group ? 'This will select a random member from the group' : 'Loading group information...'}
+                                                    </p>
+                                                    <button
+                                                        className="bg-gradient-to-r from-blue-500 to-pink-500 text-white px-2 py-1 rounded-lg mt-2 w-36"
+                                                        onClick={() => {
+                                                            if (group) {
+                                                                assignReviewer(id!);
+                                                            }
+                                                        }}
+                                                        disabled={!group || group.members.length <= 1}
+                                                    >
+                                                        Request Random Review
+                                                    </button>
+                                                </>
+                                            )}
                                         </>
                                     )}
                                 </div>
@@ -565,7 +783,8 @@ function Results() {
                                 </TableHeader>
                                 <TableBody>
                                     {results.map((result, index) => (
-                                        <TableRow key={index} onClick={() => navigate(`/results/${result.id}`)} className="cursor-pointer hover:bg-gray-800">
+                                        <TableRow key={index} onClick={() => navigate(`/results/${result.id}`)}
+                                                  className="cursor-pointer hover:bg-gray-800">
                                             <TableCell>{result.fileName}</TableCell>
                                             <TableCell
                                                 className={`font-semibold ${getStatusColor(result.status)}`}>{result.status}</TableCell>
