@@ -2,6 +2,7 @@ import {useState, useEffect} from 'react';
 import Sidebar from "@/Components/Sidebar.tsx";
 import {Buffer} from 'buffer';
 import UserManagementTable from "@/Components/UserManagementTable.tsx";
+import { AIConfigurationSection } from './AIConfigurationSection';
 
 interface UserDetails {
     firstName: string;
@@ -55,14 +56,14 @@ function Settings() {
         const token = localStorage.getItem('token');
         if (token) {
             try {
-                const {userId, userDetails, roles} = decodeToken(token);
-                setUserId(userId);
-                setUserDetails(userDetails);
-                setRoles(roles);
-                if (roles.includes('admin')) {
+                const {userId: id, userDetails: details, roles: userRoles} = decodeToken(token);
+                setUserId(id);
+                setUserDetails(details);
+                setRoles(userRoles);
+                if (userRoles.includes('admin')) {
                     fetchUsers();
                 }
-                userDetails.profilePicture = localStorage.getItem('profilePicture') || userDetails.profilePicture;
+                details.profilePicture = localStorage.getItem('profilePicture') || details.profilePicture;
             } catch (error) {
                 setError((error as Error).message);
             } finally {
@@ -172,122 +173,146 @@ function Settings() {
     }
 
     return (
-        <>
-            <div className="flex w-screen">
-                <Sidebar/>
-                <div className="flex flex-col w-full justify-start items-center p-4">
-                    <h1 className="text-2xl font-bold text-white">Settings</h1>
-                    <p className="text-white mb-4">Manage your account settings</p>
-                    <div className="flex items-start justify-center w-full max-w-4xl space-x-8">
-                        <form onSubmit={handleSubmit} className="w-1/2">
-                            <div className="mb-4 flex space-x-4">
-                                <div className="w-1/2">
-                                    <label className="block text-white text-sm font-bold mb-2" htmlFor="firstName">
-                                        First Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="firstName"
-                                        name="firstName"
-                                        value={userDetails.firstName}
-                                        onChange={handleChange}
-                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                        required
-                                    />
-                                </div>
-                                <div className="w-1/2">
-                                    <label className="block text-white text-sm font-bold mb-2" htmlFor="lastName">
-                                        Last Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="lastName"
-                                        name="lastName"
-                                        value={userDetails.lastName}
-                                        onChange={handleChange}
-                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-white text-sm font-bold mb-2" htmlFor="username">
-                                    Username
-                                </label>
-                                <input
-                                    type="text"
-                                    id="username"
-                                    name="username"
-                                    value={userDetails.username}
-                                    onChange={handleChange}
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                    required
-                                />
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-white text-sm font-bold mb-2" htmlFor="email">
-                                    Email
-                                </label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    value={userDetails.email}
-                                    onChange={handleChange}
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                    required
-                                />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <button
-                                    type="submit"
-                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                                >
-                                    Save
-                                </button>
-                            </div>
-                        </form>
-                        <div className="w-1/4 flex flex-col items-center">
-                            <img src={userDetails.profilePicture || "https://placehold.co/150"} alt="Profile Picture"
-                                 className="w-32 h-32 rounded-full mb-4"/>
-                            <div className="mb-4">
-                                <label className="block text-white text-sm font-bold mb-2" htmlFor="profilePicture">
-                                    Profile Picture URL
-                                </label>
-                                <input
-                                    type="text"
-                                    id="profilePicture"
-                                    name="profilePicture"
-                                    value={userDetails.profilePicture}
-                                    onChange={handleChange}
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                />
-                            </div>
-                            <button
-                                onClick={handleProfilePictureChange}
-                                className="h-min bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                                Update
-                            </button>
+        <div className="flex w-screen h-screen">
+            <Sidebar/>
+            <div className="flex flex-col w-full overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-8">
+                    <div className="max-w-4xl mx-auto space-y-8">
+                        <div>
+                            <h1 className="text-2xl font-bold mb-4 text-white">Settings</h1>
+                            {error && <p className="text-red-500 mb-4">{error}</p>}
                         </div>
+
+                        {/* Personal Information Section */}
+                        <div className="bg-white bg-opacity-5 p-6 rounded-lg shadow-md">
+                            <h2 className="text-xl font-semibold mb-4 text-white">Personal Information</h2>
+                            <div className="flex gap-8">
+                                <form onSubmit={handleSubmit} className="flex-1">
+                                    <div className="mb-4 flex space-x-4">
+                                        <div className="w-1/2">
+                                            <label className="block text-white text-sm font-bold mb-2" htmlFor="firstName">
+                                                First Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="firstName"
+                                                name="firstName"
+                                                value={userDetails.firstName}
+                                                onChange={handleChange}
+                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="w-1/2">
+                                            <label className="block text-white text-sm font-bold mb-2" htmlFor="lastName">
+                                                Last Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="lastName"
+                                                name="lastName"
+                                                value={userDetails.lastName}
+                                                onChange={handleChange}
+                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="mb-4">
+                                        <label className="block text-white text-sm font-bold mb-2" htmlFor="username">
+                                            Username
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="username"
+                                            name="username"
+                                            value={userDetails.username}
+                                            onChange={handleChange}
+                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="mb-4">
+                                        <label className="block text-white text-sm font-bold mb-2" htmlFor="email">
+                                            Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            value={userDetails.email}
+                                            onChange={handleChange}
+                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <button
+                                            type="submit"
+                                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                        >
+                                            Save
+                                        </button>
+                                    </div>
+                                </form>
+
+                                {/* Profile Picture Section */}
+                                <div className="w-1/3 flex flex-col items-center">
+                                    <img 
+                                        src={userDetails.profilePicture || "https://placehold.co/150"} 
+                                        alt="Profile Picture"
+                                        className="w-32 h-32 rounded-full mb-4 bg-white"
+                                    />
+                                    <div className="w-full mb-4">
+                                        <label className="block text-white text-sm font-bold mb-2" htmlFor="profilePicture">
+                                            Profile Picture URL
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="profilePicture"
+                                            name="profilePicture"
+                                            value={userDetails.profilePicture}
+                                            onChange={handleChange}
+                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleProfilePictureChange}
+                                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                    >
+                                        Update Picture
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* User Management Section (for managers) */}
+                        {roles.includes('manager') && (
+                            <div className="bg-white bg-opacity-5 p-6 rounded-lg shadow-md">
+                                <h2 className="text-xl font-semibold mb-4 text-white">User Management</h2>
+                                <input
+                                    type="text"
+                                    placeholder="Search users"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="mb-4 p-2 rounded border border-gray-300 bg-white text-gray-700"
+                                />
+                                <div className="overflow-y-auto max-h-96">
+                                    <UserManagementTable users={filteredUsers}/>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* AI Configuration Section (for admins) */}
+                        {roles.includes('admin') && (
+                            <div className="bg-white bg-opacity-5 p-6 rounded-lg shadow-md">
+                                <AIConfigurationSection />
+                            </div>
+                        )}
                     </div>
-                    {roles.includes('admin') && (
-                        <div className="w-full max-w-4xl mt-8 text-white">
-                            <h2 className="text-xl font-bold text-white mb-4">User Management</h2>
-                            <input
-                                type="text"
-                                placeholder="Search users"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="mb-4 p-2 rounded border border-gray-300 text-black"
-                            />
-                            <div className="overflow-y-scroll h-96">
-                                <UserManagementTable users={filteredUsers}/>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 

@@ -6,6 +6,7 @@ import {Editor} from "@monaco-editor/react";
 import type * as monacoEditor from "monaco-editor";
 import JSZip from 'jszip'
 import {createReviewManager, ReviewCommentState, type ReviewManager, ReviewCommentEvent} from "@/Components/monacoReview";
+import {AiOutlineLoading3Quarters} from "react-icons/ai";
 
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/Components/ui/table"
 import {Textarea} from "@/Components/ui/textarea"
@@ -13,6 +14,7 @@ import {ReviewerCombobox} from "@/Components/ReviewerCombobox.tsx";
 import Topbar from "@/Components/Topbar.tsx";
 import Sidebar from "@/Components/Sidebar.tsx";
 import {render} from "react-dom";
+import ReactMarkdown from "react-markdown";
 
 interface Result {
     id: string;
@@ -26,8 +28,11 @@ interface Result {
     timestamp: string;
     assignment: {
         title: string;
+        maxRuntime: number;
+        maxMemory: number;
     };
     testResults: string;
+    aioutput: string | null;
 }
 
 interface Manager {
@@ -594,20 +599,26 @@ function Results() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {testResults.map((test, index) => (
-                                <TableRow key={index}>
-                                    <TableCell>{test.input}</TableCell>
-                                    <TableCell>{test.expected}</TableCell>
-                                    <TableCell>{test.actual}</TableCell>
-                                    <TableCell>
-                  <span className={test.passed ? "text-green-500" : "text-red-500"}>
-                    {test.passed ? "Passed" : "Failed"}
-                  </span>
-                                    </TableCell>
-                                    <TableCell>{test.memory} KB</TableCell>
-                                    <TableCell>{test.runtime} ms</TableCell>
-                                </TableRow>
-                            ))}
+                            {testResults.map((test, index) => {
+                                const status = test.status === "Passed" &&
+                                (test.runtime > specificResult.assignment.maxRuntime || test.memory > specificResult.assignment.maxMemory)
+                                    ? "Failed"
+                                    : test.status;
+                                return (
+                                    <TableRow key={index}>
+                                        <TableCell>{test.input}</TableCell>
+                                        <TableCell>{test.expected}</TableCell>
+                                        <TableCell>{test.actual}</TableCell>
+                                        <TableCell>
+                                        <span className={status === "Passed" ? "text-green-500" : "text-red-500"}>
+                                            {status}
+                                        </span>
+                                        </TableCell>
+                                        <TableCell>{test.memory} KB</TableCell>
+                                        <TableCell>{test.runtime} ms</TableCell>
+                                    </TableRow>
+                                );
+                            })}
                         </TableBody>
                     </Table>
                 </div>
@@ -617,6 +628,14 @@ function Results() {
             return <p className="text-red-500">Error displaying test results.</p>;
         }
     };
+
+    const renderRunningState = () => (
+        <div className="flex items-center space-x-2 text-amber-500">
+            <AiOutlineLoading3Quarters className="animate-spin" />
+            <span>Running your code... This may take a few minutes.</span>
+            <p className="text-sm text-gray-400">Refresh or come back later to see the results.</p>
+        </div>
+    );
 
     return (
         <>
@@ -638,136 +657,156 @@ function Results() {
                                         <p className="text-sm ml-4">Assignment: {specificResult.assignment.title}</p>
                                     </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-lg">Execution Output</h3>
-                                    <Textarea
-                                        ref={outputRef}
-                                        className="resize-none overflow-hidden border-0 bg-white bg-opacity-5 rounded-md shadow-md"
-                                        value={specificResult.output}
-                                        readOnly
-                                        onChange={() => {
-                                            if (outputRef.current) {
-                                                outputRef.current.style.height = 'auto'
-                                                outputRef.current.style.height = `${outputRef.current.scrollHeight}px`
-                                            }
-                                        }}
-                                    />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg">Linting</h3>
-                                    <Textarea
-                                        ref={lintOutputRef}
-                                        className="resize-none overflow-hidden border-0 bg-white bg-opacity-5 rounded-md shadow-md"
-                                        value={specificResult.lintOutput}
-                                        readOnly
-                                        onChange={() => {
-                                            if (lintOutputRef.current) {
-                                                lintOutputRef.current.style.height = 'auto'
-                                                lintOutputRef.current.style.height = `${lintOutputRef.current.scrollHeight}px`
-                                            }
-                                        }}
-                                    />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg">Your project</h3>
-                                    <div className="flex bg-white bg-opacity-5 rounded-md shadow-md">
-                                        <div className="flex flex-col w-1/4 p-4 bg-white bg-opacity-5">
-                                            <div
-                                                className="overflow-auto h-96">{fileTree && renderFileTree(fileTree)}</div>
-                                        </div>
-                                        <div className="w-3/4 p-4">
-                                            {selectedFileContent ? (
-                                                <Editor
-                                                    height="500px"
-                                                    defaultLanguage={"python"}
-                                                    language={getLanguageFromFileName(selectedFileContent)}
-                                                    value={selectedFileContent}
-                                                    options={{
-                                                        readOnly: true,
-                                                        minimap: {enabled: false},
-                                                        scrollBeyondLastLine: false,
-                                                    }}
-                                                    onMount={handleEditorMount}
-                                                    onChange={renderComments}
-                                                    theme="vs-dark"
+
+                                {specificResult.status === 'Running' ? (
+                                    <div className="flex justify-center items-center p-8 bg-white bg-opacity-5 rounded-md shadow-md">
+                                        {renderRunningState()}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <h3 className="text-lg">Execution Output</h3>
+                                            <div className="bg-white bg-opacity-5 rounded-md shadow-md p-4">
+                                                <Textarea
+                                                    ref={outputRef}
+                                                    value={specificResult.output}
+                                                    readOnly
+                                                    className="w-full resize-none overflow-hidden border-0 bg-transparent text-gray-300 font-mono text-sm"
                                                 />
-                                            ) : (
-                                                <div className="text-gray-500 text-center">Select a file to view its
-                                                    content</div>
-                                            )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h3 className="text-lg">Test Results</h3>
-                                    <div className="bg-white bg-opacity-5 rounded-md shadow-md p-4">
-                                        {renderTestResults()}
-                                    </div>
-                                </div>
-                                <div className="flex flex-col">
-                                    <h3 className="text-lg">Request peer review</h3>
-                                    {reviewerAssigned ? (
-                                        <p className="text-sm text-green-500">
-                                            A reviewer has been assigned to this submission.
-                                            {randomReviewer && reviewRequestType === 'random' && (
-                                                <span> Random reviewer selected: {randomReviewer.firstName} {randomReviewer.lastName}</span>
-                                            )}
-                                        </p>
-                                    ) : (
-                                        <>
-                                            <div className="flex space-x-4 mb-4">
-                                                <div
-                                                    className={`cursor-pointer p-2 rounded-md ${reviewRequestType === 'owner' ? 'bg-blue-500' : 'bg-white bg-opacity-10'}`}
-                                                    onClick={() => setReviewRequestType('owner')}
-                                                >
-                                                    <span>Group Owner</span>
-                                                </div>
-                                                <div
-                                                    className={`cursor-pointer p-2 rounded-md ${reviewRequestType === 'random' ? 'bg-blue-500' : 'bg-white bg-opacity-10'}`}
-                                                    onClick={() => setReviewRequestType('random')}
-                                                >
-                                                    <span>Random Group Member</span>
+
+                                        <div>
+                                            <h3 className="text-lg">Test Results</h3>
+                                            <div className="bg-white bg-opacity-5 rounded-md shadow-md p-4">
+                                                {renderTestResults()}
+                                            </div>
+                                        </div>
+
+                                        {specificResult.aioutput && (
+                                            <div>
+                                                <h3 className="text-lg">AI Analysis & Feedback</h3>
+                                                <p className="text-sm text-gray-400">Remember these suggestions are just recommendation, not necessarily the best solution.
+                                                    Use your own judgement to decide whether to apply them or not and/or which ones to apply.
+                                                    If you feel that the suggestions are incorrect, please ignore them and request a peer review instead.
+                                                </p>
+                                                <div className="bg-white bg-opacity-5 rounded-md shadow-md p-4">
+                                                    <ReactMarkdown className="text-gray-300 font-mono text-sm">
+                                                        {specificResult.aioutput}
+                                                    </ReactMarkdown>
                                                 </div>
                                             </div>
+                                        )}
 
-                                            {reviewRequestType === 'owner' ? (
-                                                <>
-                                                    <p className="text-sm text-gray-400 mb-2">
-                                                        {group ? `Request review from group owner${group.owner === localStorage.getItem('userId') ? ' (You)' : ''}` : 'Loading group information...'}
-                                                    </p>
-                                                    <button
-                                                        className="bg-gradient-to-r from-blue-500 to-pink-500 text-white px-2 py-1 rounded-lg mt-2 w-36"
-                                                        onClick={() => {
-                                                            if (group) {
-                                                                assignReviewer(id!, group.owner);
-                                                            }
-                                                        }}
-                                                        disabled={!group || group.owner === localStorage.getItem('userId')}
-                                                    >
-                                                        Request Owner Review
-                                                    </button>
-                                                </>
+                                        <div>
+                                            <h3 className="text-lg">Linting</h3>
+                                            <Textarea
+                                                ref={lintOutputRef}
+                                                className="resize-none overflow-hidden border-0 bg-white bg-opacity-5 rounded-md shadow-md"
+                                                value={specificResult.lintOutput}
+                                                readOnly
+                                                onChange={() => {
+                                                    if (lintOutputRef.current) {
+                                                        lintOutputRef.current.style.height = 'auto'
+                                                        lintOutputRef.current.style.height = `${lintOutputRef.current.scrollHeight}px`
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg">Your project</h3>
+                                            <div className="flex bg-white bg-opacity-5 rounded-md shadow-md">
+                                                <div className="flex flex-col w-1/4 p-4 bg-white bg-opacity-5">
+                                                    <div className="overflow-auto h-96">{fileTree && renderFileTree(fileTree)}</div>
+                                                </div>
+                                                <div className="w-3/4 p-4">
+                                                    {selectedFileContent ? (
+                                                        <Editor
+                                                            height="500px"
+                                                            defaultLanguage={"python"}
+                                                            language={getLanguageFromFileName(selectedFileContent)}
+                                                            value={selectedFileContent}
+                                                            options={{
+                                                                readOnly: true,
+                                                                minimap: {enabled: false},
+                                                                scrollBeyondLastLine: false,
+                                                            }}
+                                                            onMount={handleEditorMount}
+                                                            onChange={renderComments}
+                                                            theme="vs-dark"
+                                                        />
+                                                    ) : (
+                                                        <div className="text-gray-500 text-center">Select a file to view its content</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <h3 className="text-lg">Request peer review</h3>
+                                            {reviewerAssigned ? (
+                                                <p className="text-sm text-green-500">
+                                                    A reviewer has been assigned to this submission.
+                                                    {randomReviewer && reviewRequestType === 'random' && (
+                                                        <span> Random reviewer selected: {randomReviewer.firstName} {randomReviewer.lastName}</span>
+                                                    )}
+                                                </p>
                                             ) : (
                                                 <>
-                                                    <p className="text-sm text-gray-400 mb-2">
-                                                        {group ? 'This will select a random member from the group' : 'Loading group information...'}
-                                                    </p>
-                                                    <button
-                                                        className="bg-gradient-to-r from-blue-500 to-pink-500 text-white px-2 py-1 rounded-lg mt-2 w-36"
-                                                        onClick={() => {
-                                                            if (group) {
-                                                                assignReviewer(id!);
-                                                            }
-                                                        }}
-                                                        disabled={!group || group.members.length <= 1}
-                                                    >
-                                                        Request Random Review
-                                                    </button>
+                                                    <div className="flex space-x-4 mb-4">
+                                                        <div
+                                                            className={`cursor-pointer p-2 rounded-md ${reviewRequestType === 'owner' ? 'bg-blue-500' : 'bg-white bg-opacity-10'}`}
+                                                            onClick={() => setReviewRequestType('owner')}
+                                                        >
+                                                            <span>Group Owner</span>
+                                                        </div>
+                                                        <div
+                                                            className={`cursor-pointer p-2 rounded-md ${reviewRequestType === 'random' ? 'bg-blue-500' : 'bg-white bg-opacity-10'}`}
+                                                            onClick={() => setReviewRequestType('random')}
+                                                        >
+                                                            <span>Random Group Member</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {reviewRequestType === 'owner' ? (
+                                                        <>
+                                                            <p className="text-sm text-gray-400 mb-2">
+                                                                {group ? `Request review from group owner${group.owner === localStorage.getItem('userId') ? ' (You)' : ''}` : 'Loading group information...'}
+                                                            </p>
+                                                            <button
+                                                                className="bg-gradient-to-r from-blue-500 to-pink-500 text-white px-2 py-1 rounded-lg mt-2 w-36"
+                                                                onClick={() => {
+                                                                    if (group) {
+                                                                        assignReviewer(id!, group.owner);
+                                                                    }
+                                                                }}
+                                                                disabled={!group || group.owner === localStorage.getItem('userId')}
+                                                            >
+                                                                Request Owner Review
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <p className="text-sm text-gray-400 mb-2">
+                                                                {group ? 'This will select a random member from the group' : 'Loading group information...'}
+                                                            </p>
+                                                            <button
+                                                                className="bg-gradient-to-r from-blue-500 to-pink-500 text-white px-2 py-1 rounded-lg mt-2 w-36"
+                                                                onClick={() => {
+                                                                    if (group) {
+                                                                        assignReviewer(id!);
+                                                                    }
+                                                                }}
+                                                                disabled={!group || group.members.length <= 1}
+                                                            >
+                                                                Request Random Review
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </>
                                             )}
-                                        </>
-                                    )}
-                                </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         ) : (
                             <Table>
@@ -786,8 +825,18 @@ function Results() {
                                         <TableRow key={index} onClick={() => navigate(`/results/${result.id}`)}
                                                   className="cursor-pointer hover:bg-gray-800">
                                             <TableCell>{result.fileName}</TableCell>
-                                            <TableCell
-                                                className={`font-semibold ${getStatusColor(result.status)}`}>{result.status}</TableCell>
+                                            <TableCell className={`font-semibold ${getStatusColor(result.status)}`}>
+                                                <div className="flex items-center space-x-2">
+                                                    {result.status === 'Running' ? (
+                                                        <>
+                                                            <AiOutlineLoading3Quarters className="animate-spin" />
+                                                            <span>Running</span>
+                                                        </>
+                                                    ) : (
+                                                        result.status
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                             <TableCell>{result.language}</TableCell>
                                             <TableCell>{convertTimestampToDateTime(parseInt(result.timestamp))}</TableCell>
                                             <TableCell>{result.assignment.title}</TableCell>

@@ -53,7 +53,7 @@ const UserManagementTable: React.FC<UserTableProps> = ({ users: initialUsers }) 
     };
 
     return (
-        <Table>
+        <Table className="text-white">
             <TableCaption>A list of users</TableCaption>
             <TableHeader>
                 <TableRow>
