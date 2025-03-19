@@ -33,6 +33,7 @@ interface Result {
     };
     testResults: string;
     aioutput: string | null;
+    grade: number;
 }
 
 interface Manager {
@@ -647,14 +648,19 @@ function Results() {
                         {id && specificResult ? (
                             <div className="flex flex-col mr-4 space-y-4">
                                 <div>
-                                    <h2 className="text-lg">Results for {specificResult.fileName}</h2>
-                                    <div className="flex justify-start mb-4">
-                                        <p className={`text-sm ${getStatusColor(specificResult.status)}`}>{specificResult.status}</p>
-                                        <p className="text-sm ml-4">{convertTimestampToDateTime(parseInt(specificResult.timestamp))}</p>
-                                        <p className="text-sm ml-4">{specificResult.language}</p>
-                                        <p className="text-sm ml-4">Runtime: {specificResult.runtime} ms</p>
-                                        <p className="text-sm ml-4">Memory: {specificResult.memory} KB</p>
-                                        <p className="text-sm ml-4">Assignment: {specificResult.assignment.title}</p>
+                                    <div className="flex justify-between">
+                                        <h2 className="text-lg">Results for {specificResult.fileName}</h2>
+                                        <p className={`text-md font-semibold ${getStatusColor(specificResult.status)}`}>{specificResult.status}</p>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div className="flex">
+                                            <p className="text-sm">{convertTimestampToDateTime(parseInt(specificResult.timestamp))}</p>
+                                            <p className="text-sm ml-4">{specificResult.language}</p>
+                                            <p className="text-sm ml-4">Runtime: {specificResult.runtime} ms</p>
+                                            <p className="text-sm ml-4">Memory: {specificResult.memory} KB</p>
+                                            <p className="text-sm ml-4">Assignment: {specificResult.assignment.title}</p>
+                                        </div>
+                                        <p className="text-sm bg-gradient-to-r from-lingrad2 to-lingrad3 bg-clip-text text-transparent">Grade: {specificResult.grade.toFixed(2) || 'To be graded'}%</p>
                                     </div>
                                 </div>
 
