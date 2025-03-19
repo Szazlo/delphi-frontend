@@ -7,6 +7,7 @@ import AssignmentDialog from "@/Components/AssignmentDialog.tsx";
 import FileUploadDialogue from "@/Components/FileUploadDialogue.tsx";
 import ReactMarkdown from "react-markdown";
 import TestCaseManager from '@/Components/TestCaseManager.tsx';
+import { AssignmentSubmissions } from './AssignmentSubmissions';
 
 interface Group {
     id: string;
@@ -44,6 +45,7 @@ function Assignments() {
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userId');
+    const userRole = localStorage.getItem('roles');
 
     useEffect(() => {
         const fetchAssignments = async () => {
@@ -195,6 +197,12 @@ function Assignments() {
                             <div className="flex-1 overflow-y-auto">
                                 <ReactMarkdown className="text-gray-300">{selectedAssignment.description}</ReactMarkdown>
                                 <TestCaseManager assignmentId={selectedAssignment.id} />
+                                {(userRole?.includes("admin") || userRole?.includes("manager")) && (
+                                    <>
+                                        <hr className="my-4 border-gray-600" />
+                                        <AssignmentSubmissions />
+                                    </>
+                                )}
                             </div>
                             <div className="flex justify-end my-4">
                                 <div className="flex flex-col items-end">
