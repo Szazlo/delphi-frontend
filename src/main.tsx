@@ -13,6 +13,7 @@ import PrivateRoute from "@/Pages/PrivateRoute.tsx";
 import Groups from "@/Pages/Groups/Groups.tsx";
 import Assignments from "@/Pages/Assignments/Assignments.tsx";
 import Requests from "@/Pages/Requests/Requests.tsx";
+import NotFound from "@/Pages/NotFound/NotFound.tsx";
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/results" element={<PrivateRoute component={Results} />} />
                 <Route path="/results/:id" element={<PrivateRoute component={Results} />} /> {/* Dynamic Route */}
                 <Route path="/settings" element={<PrivateRoute component={Settings} />} />
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </Router>
     </StrictMode>,
