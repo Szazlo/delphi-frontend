@@ -576,13 +576,13 @@ function Results() {
 
     const renderTestResults = () => {
         if (!specificResult || !specificResult.testResults) {
-            return null;
+            return <p className="text-gray-500">No test cases.</p>;
         }
 
         try {
             const testResults = JSON.parse(specificResult.testResults);
             if (!Array.isArray(testResults) || testResults.length === 0) {
-                return <p className="text-gray-500">No test results available.</p>;
+                return <p className="text-gray-500">No test cases.</p>;
             }
 
             return (
@@ -660,7 +660,7 @@ function Results() {
                                             <p className="text-sm ml-4">Memory: {specificResult.memory} KB</p>
                                             <p className="text-sm ml-4">Assignment: {specificResult.assignment.title}</p>
                                         </div>
-                                        <p className="text-sm bg-gradient-to-r from-lingrad2 to-lingrad3 bg-clip-text text-transparent">Grade: {specificResult.grade.toFixed(2) || 'To be graded'}%</p>
+                                        <p className="text-sm bg-gradient-to-r from-lingrad2 to-lingrad3 bg-clip-text text-transparent">Grade: {specificResult.grade ? specificResult.grade.toFixed(2) : 'N/A'}%</p>
                                     </div>
                                 </div>
 

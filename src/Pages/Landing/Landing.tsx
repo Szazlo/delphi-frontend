@@ -8,7 +8,7 @@ import Footer from "@/Components/Footer.tsx";
 
 function Landing() {
     return (
-        <div className="min-h-screen mx-20 min-w-screen text-white">
+        <div className="flex flex-col w-screen">
             <Navbar showButtons={true}/>
             <HeroSection/>
             <InfoSection/>

@@ -176,7 +176,11 @@ function Assignments() {
                                 />
                             </div>
                             <div className="flex justify-between items-center">
-                                <h1 className="text-2xl text-gray-300">{selectedAssignment.title}</h1>
+                                <div>
+                                    <h1 className="text-2xl font-semibold text-gray-300">{selectedAssignment.title}</h1>
+                                    <p className="text-gray-300">Time Limit: {selectedAssignment.timeLimit}s | Memory
+                                        Limit: {selectedAssignment.memoryLimit || "n/a "}KB</p>
+                                </div>
                                 <div className="flex flex-col items-end">
                                     <button
                                         onClick={() => setShowAssignmentDialog(true)}
@@ -191,8 +195,6 @@ function Assignments() {
                                     )}
                                 </div>
                             </div>
-                            <p className="text-gray-300">Time Limit: {selectedAssignment.timeLimit}s | Memory
-                                Limit: {selectedAssignment.memoryLimit || "n/a "}KB</p>
                             <hr className="my-4 border-gray-600" />
                             <div className="flex-1 overflow-y-auto">
                                 <ReactMarkdown className="text-gray-300">{selectedAssignment.description}</ReactMarkdown>
