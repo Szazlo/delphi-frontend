@@ -218,7 +218,7 @@ function Dashboard() {
                         </div>
 
                         <div className="w-full">
-                            <h1 className="text-gray-300 text-2xl">Recent Assignments</h1>
+                            <h1 className="text-gray-300 text-2xl">Latest Assignments</h1>
                             {assignments.length > 0 ? (
                                 <div className="grid grid-cols-2 gap-3 w-fit">
                                     {assignments.slice(0, 6).map((assignment) => (

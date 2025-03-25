@@ -12,10 +12,12 @@ interface AssignmentCardProps {
     assignment: Assignment;
     groupId: string;
     onSave: (assignment: Assignment, groupId: string) => void;
+    userRole?: string | null;
 }
 
-const AssignmentCard = ({ title, dueDate, maxScore, onClick, onClone, assignment, groupId, onSave }: AssignmentCardProps) => {
+const AssignmentCard = ({ title, dueDate, maxScore, onClick, onClone, assignment, groupId, onSave, userRole}: AssignmentCardProps) => {
     const [showDialog, setShowDialog] = useState(false);
+    const isAdmin = (userRole?.includes('admin') || userRole?.includes('manager'));
 
     const handleManageClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -39,6 +41,7 @@ const AssignmentCard = ({ title, dueDate, maxScore, onClick, onClone, assignment
                     )}
                     <p className="text-gray-400">Max Score: {maxScore}</p>
                 </div>
+                {isAdmin && (
                 <div className="flex items-end space-x-2">
                     <button
                         onClick={(e) => {
@@ -56,6 +59,7 @@ const AssignmentCard = ({ title, dueDate, maxScore, onClick, onClone, assignment
                         Manage
                     </button>
                 </div>
+                )}
             </div>
             {showDialog && (
                 <div

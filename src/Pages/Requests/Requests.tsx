@@ -16,14 +16,15 @@ interface Request {
 }
 
 function Requests() {
-    const [requests, setRequests] = useState<Request[]>([]);
+    const [myRequests, setMyRequests] = useState<Request[]>([]);
+    const [assignedRequests, setAssignedRequests] = useState<Request[]>([]);
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userId');
     const roles = localStorage.getItem('roles');
 
     useEffect(() => {
-        const fetchRequests = async () => {
+        const fetchMyRequests = async () => {
             try {
                 const url = `http://localhost:8080/api/submissions/user/${userId}?withReviewRequests=true`;
                 const response = await fetch(url, {
@@ -35,13 +36,13 @@ function Requests() {
                     throw new Error('Failed to fetch requests');
                 }
                 const data = await response.json();
-                setRequests(data);
+                setMyRequests(data);
             } catch (error) {
                 console.error((error as Error).message);
             }
         };
 
-        const fetchReviewerRequests = async () => {
+        const fetchAssignedRequests = async () => {
             try {
                 const url = `http://localhost:8080/api/submissions/reviewer/${userId}`;
                 const response = await fetch(url, {
@@ -53,20 +54,47 @@ function Requests() {
                     throw new Error('Failed to fetch requests');
                 }
                 const data = await response.json();
-                setRequests(prevRequests => {
-                    const newRequests = data.filter((request: Request) => !prevRequests.some(r => r.id === request.id));
-                    return [...prevRequests, ...newRequests];
-                });
+                setAssignedRequests(data);
             } catch (error) {
                 console.error((error as Error).message);
             }
         }
 
-        fetchRequests();
-        fetchReviewerRequests();
+        fetchMyRequests();
+        fetchAssignedRequests();
     }, [token, userId, roles]);
 
-
+    const renderRequestTable = (requests: Request[], caption: string, emptyMessage: string) => (
+        <Table className="text-white">
+            {requests.length === 0 ? (
+                <TableCaption>{emptyMessage}</TableCaption>
+            ) : (
+                <TableCaption>{caption}</TableCaption>
+            )}
+            <TableHeader>
+                <TableRow>
+                    <TableHead>File Name</TableHead>
+                    <TableHead>Assignment</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Timestamp</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {requests.map(request => (
+                    <TableRow
+                        key={request.id}
+                        onClick={() => navigate(`/results/${request.id}`)}
+                        className="cursor-pointer hover:bg-gray-800"
+                    >
+                        <TableCell>{request.fileName}</TableCell>
+                        <TableCell>{request.assignment.title}</TableCell>
+                        <TableCell>{request.status}</TableCell>
+                        <TableCell>{new Date(Number(request.timestamp)).toLocaleString()}</TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    );
 
     return (
         <>
@@ -74,34 +102,27 @@ function Requests() {
                 <Sidebar />
                 <div className="flex flex-col w-full">
                     <Topbar />
-                    <div className="flex flex-col w-full space-y-4 p-4 justify-start items-start">
-                        <h1 className="text-gray-300 text-2xl text-center">Review Requests</h1>
-                        <div className="w-full overflow-x-auto">
-                            <Table className="text-white">
-                                {requests.length === 0 && (
-                                    <TableCaption>No requests</TableCaption>
-                                ) || (
-                                    <TableCaption>List of review requests</TableCaption>
+                    <div className="flex flex-col w-full space-y-8 p-4 justify-start items-start">
+                        <div className="w-full">
+                            <h2 className="text-xl font-semibold text-gray-300 mb-4">My Review Requests</h2>
+                            <div className="w-full overflow-x-auto">
+                                {renderRequestTable(
+                                    myRequests,
+                                    "Reviews requested by me",
+                                    "You haven't requested any reviews"
                                 )}
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>File Name</TableHead>
-                                        <TableHead>Assignment</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Timestamp</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {requests.map(request => (
-                                        <TableRow key={request.id} onClick={() => navigate(`/results/${request.id}`)} className="cursor-pointer hover:bg-gray-800">
-                                            <TableCell>{request.fileName}</TableCell>
-                                            <TableCell>{request.assignment.title}</TableCell>
-                                            <TableCell>{request.status}</TableCell>
-                                            <TableCell>{new Date(Number(request.timestamp)).toLocaleString()}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                            </div>
+                        </div>
+
+                        <div className="w-full">
+                            <h2 className="text-xl font-semibold text-gray-300 mb-4">Assigned To Me</h2>
+                            <div className="w-full overflow-x-auto">
+                                {renderRequestTable(
+                                    assignedRequests,
+                                    "Reviews assigned to me",
+                                    "No reviews are assigned to you"
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

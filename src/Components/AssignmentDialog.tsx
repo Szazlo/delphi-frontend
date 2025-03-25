@@ -158,6 +158,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
                 const data = await createAssignment(formattedData);
                 onSave(data, formData.group_id);
             }
+            window.location.reload()
             onOpenChange(false);
         } catch (error) {
             setError((error as Error).message);
@@ -179,6 +180,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
             throw new Error('Failed to delete assignment');
         }
         onOpenChange(false);
+        window.history.back();
     };
 
     return (

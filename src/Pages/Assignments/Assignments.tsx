@@ -18,7 +18,7 @@ interface Assignment {
     dueDate: string | null;
     id: string;
     group_id: string;
-    group: Group;
+    group?: Group;
     title: string;
     description: string;
     timeLimit: number;
@@ -182,12 +182,14 @@ function Assignments() {
                                         Limit: {selectedAssignment.memoryLimit || "n/a "}KB</p>
                                 </div>
                                 <div className="flex flex-col items-end">
-                                    <button
-                                        onClick={() => setShowAssignmentDialog(true)}
-                                        className="text-white font-bold py-1 px-2 rounded mt-2 bg-white bg-opacity-10 hover:bg-opacity-20 transition duration-300"
-                                    >
-                                        Manage
-                                    </button>
+                                    {(userRole?.includes("admin") || userRole?.includes("manager")) && (
+                                        <button
+                                            onClick={() => setShowAssignmentDialog(true)}
+                                            className="text-white font-bold py-1 px-2 rounded mt-2 bg-white bg-opacity-10 hover:bg-opacity-20 transition duration-300"
+                                        >
+                                            Manage
+                                        </button>
+                                    )}
                                     <p className="text-gray-300">Marks Available: {selectedAssignment.maxScore}</p>
                                     {selectedAssignment.dueDate && (
                                         <p className="text-gray-300">Due
@@ -198,9 +200,9 @@ function Assignments() {
                             <hr className="my-4 border-gray-600" />
                             <div className="flex-1 overflow-y-auto">
                                 <ReactMarkdown className="text-gray-300">{selectedAssignment.description}</ReactMarkdown>
-                                <TestCaseManager assignmentId={selectedAssignment.id} />
                                 {(userRole?.includes("admin") || userRole?.includes("manager")) && (
                                     <>
+                                        <TestCaseManager assignmentId={selectedAssignment.id} />
                                         <hr className="my-4 border-gray-600" />
                                         <AssignmentSubmissions />
                                     </>
@@ -228,12 +230,23 @@ function Assignments() {
                         <div className="flex flex-col h-full">
                             <div className="flex justify-between items-center mb-4">
                                 <h1 className="text-2xl text-gray-300">Assignments</h1>
-                                <button
-                                    onClick={() => setShowAssignmentDialog(true)}
-                                    className="bg-success hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded"
-                                >
-                                    + New Assignment
-                                </button>
+                                {(userRole?.includes("admin") || userRole?.includes("manager")) && (
+                                    <>
+                                        <button
+                                            onClick={() => setShowAssignmentDialog(true)}
+                                            className="bg-success hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded"
+                                        >
+                                            + New Assignment
+                                        </button>
+                                        <AssignmentDialog
+                                            groupId=""
+                                            assignment={null}
+                                            onSave={handleSaveAssignment}
+                                            isOpen={showAssignmentDialog}
+                                            onOpenChange={setShowAssignmentDialog}
+                                        />
+                                    </>
+                                )}
                             </div>
 
                             <div className="flex-1 overflow-y-auto">
@@ -250,6 +263,7 @@ function Assignments() {
                                                 assignment={assignment}
                                                 groupId={assignment.group_id}
                                                 onSave={handleSaveAssignment}
+                                                userRole={userRole}
                                             />
                                         ))
                                     ) : (

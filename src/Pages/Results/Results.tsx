@@ -15,6 +15,7 @@ import Topbar from "@/Components/Topbar.tsx";
 import Sidebar from "@/Components/Sidebar.tsx";
 import {render} from "react-dom";
 import ReactMarkdown from "react-markdown";
+import {toast} from "sonner";
 
 interface Result {
     id: string;
@@ -326,6 +327,7 @@ function Results() {
             } else {
                 console.error('Error assigning reviewer:', response);
             }
+            toast.success('Reviewer assigned successfully');
         } catch (error) {
             console.error('Error assigning reviewer:', error);
         }

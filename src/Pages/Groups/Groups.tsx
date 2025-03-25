@@ -462,8 +462,14 @@ function Groups() {
                                             title={assignment.title}
                                             dueDate={assignment.dueDate}
                                             maxScore={assignment.maxScore}
+                                            assignment={assignment}
+                                            groupId={id}
+                                            onSave={(updatedAssignment: Assignment) => {
+                                                setAssignments(assignments.map(a => a.id === updatedAssignment.id ? updatedAssignment : a));
+                                            }}
                                             onClick={() => handleSelectAssignment(assignment)}
                                             onClone={() => handleCloneAssignment(assignment)}
+                                            userRole={roles}
                                         />
                                     ))
                                 ) : (
