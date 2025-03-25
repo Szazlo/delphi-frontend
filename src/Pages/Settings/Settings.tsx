@@ -1,6 +1,7 @@
 import {useState, useEffect} from 'react';
 import Sidebar from "@/Components/Sidebar.tsx";
 import {Buffer} from 'buffer';
+import { toast } from "sonner"
 import UserManagementTable from "@/Components/UserManagementTable.tsx";
 import { AIConfigurationSection } from './AIConfigurationSection';
 
@@ -127,7 +128,7 @@ function Settings() {
                 const data = await response.json();
                 throw new Error(data.message || 'Failed to update user details');
             }
-            alert('User details updated successfully. Please log in again to see the changes.');
+            toast.success('Changes saved. Log out and log back in to see the changes.');
         } catch (error) {
             setError((error as Error).message);
         }
@@ -150,7 +151,6 @@ function Settings() {
                 throw new Error(data.message || 'Failed to update profile picture');
             }
             alert('Profile picture updated successfully.');
-            // You can update localStorage here if necessary
             localStorage.setItem('profilePicture', userDetails.profilePicture);
         } catch (error) {
             setError((error as Error).message);
@@ -183,7 +183,6 @@ function Settings() {
                             {error && <p className="text-red-500 mb-4">{error}</p>}
                         </div>
 
-                        {/* Personal Information Section */}
                         <div className="bg-white bg-opacity-5 p-6 rounded-lg shadow-md">
                             <h2 className="text-xl font-semibold mb-4 text-white">Personal Information</h2>
                             <div className="flex gap-8">
@@ -256,8 +255,7 @@ function Settings() {
                                     </div>
                                 </form>
 
-                                {/* Profile Picture Section */}
-                                <div className="w-1/3 flex flex-col items-center">
+                                <div className="w-1/3 flex flex-col items-center justify-end">
                                     <img 
                                         src={userDetails.profilePicture || "https://placehold.co/150"} 
                                         alt="Profile Picture"
@@ -286,7 +284,6 @@ function Settings() {
                             </div>
                         </div>
 
-                        {/* User Management Section (for managers) */}
                         {roles.includes('manager') && (
                             <div className="bg-white bg-opacity-5 p-6 rounded-lg shadow-md">
                                 <h2 className="text-xl font-semibold mb-4 text-white">User Management</h2>
@@ -303,7 +300,6 @@ function Settings() {
                             </div>
                         )}
 
-                        {/* AI Configuration Section (for admins) */}
                         {roles.includes('admin') && (
                             <div className="bg-white bg-opacity-5 p-6 rounded-lg shadow-md">
                                 <AIConfigurationSection />

@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 
 const InfoSection = () => {
     const [activeItem, setActiveItem] = useState(0);
-    const sectionRef = useRef<HTMLDivElement>(null);
 
     const infoContent = [
         {
@@ -19,34 +18,12 @@ const InfoSection = () => {
         }
     ];
 
-    useEffect(() => {
-        const handleScroll = () => {
-            if (!sectionRef.current) return;
-            const rect = sectionRef.current.getBoundingClientRect();
-
-            if (rect.top < window.innerHeight && rect.bottom > 0) {
-                const visiblePortion = Math.min(
-                    Math.max(0, window.innerHeight - rect.top) / window.innerHeight,
-                    1
-                );
-                const itemIndex = Math.min(
-                    Math.floor(visiblePortion * infoContent.length),
-                    infoContent.length - 1
-                );
-                setActiveItem(itemIndex);
-            }
-        };
-        window.addEventListener('scroll', handleScroll);
-        handleScroll();
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [infoContent.length]);
-
     const handleClick = (index: number) => {
         setActiveItem(index);
     };
 
     return (
-        <div ref={sectionRef} className="flex text-white p-5 my-14">
+        <div className="flex text-white p-5 my-14">
             <div className="w-48 flex flex-col">
                 {infoContent.map((item, index) => (
                     <div

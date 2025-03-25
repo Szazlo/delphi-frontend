@@ -78,7 +78,11 @@ function Requests() {
                         <h1 className="text-gray-300 text-2xl text-center">Review Requests</h1>
                         <div className="w-full overflow-x-auto">
                             <Table className="text-white">
-                                <TableCaption>Requests</TableCaption>
+                                {requests.length === 0 && (
+                                    <TableCaption>No requests</TableCaption>
+                                ) || (
+                                    <TableCaption>List of review requests</TableCaption>
+                                )}
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>File Name</TableHead>

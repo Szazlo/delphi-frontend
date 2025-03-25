@@ -644,9 +644,9 @@ function Results() {
                 <Sidebar/>
                 <div className="flex flex-col w-full h-screen">
                     <Topbar/>
-                    <div className="flex flex-col ml-4 text-white h-full overflow-auto pb-20">
+                    <div className="flex flex-col p-4 text-white h-full overflow-auto pb-20">
                         {id && specificResult ? (
-                            <div className="flex flex-col mr-4 space-y-4">
+                            <div className="flex flex-col space-y-4">
                                 <div>
                                     <div className="flex justify-between">
                                         <h2 className="text-lg">Results for {specificResult.fileName}</h2>
@@ -815,41 +815,48 @@ function Results() {
                                 )}
                             </div>
                         ) : (
-                            <Table>
-                                <TableCaption>A list of your previous submissions</TableCaption>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-28">Name</TableHead>
-                                        <TableHead className="w-36">Status</TableHead>
-                                        <TableHead className="w-36">Language</TableHead>
-                                        <TableHead className="w-36">Time</TableHead>
-                                        <TableHead className="w-36">Assignment</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {results.map((result, index) => (
-                                        <TableRow key={index} onClick={() => navigate(`/results/${result.id}`)}
-                                                  className="cursor-pointer hover:bg-gray-800">
-                                            <TableCell>{result.fileName}</TableCell>
-                                            <TableCell className={`font-semibold ${getStatusColor(result.status)}`}>
-                                                <div className="flex items-center space-x-2">
-                                                    {result.status === 'Running' ? (
-                                                        <>
-                                                            <AiOutlineLoading3Quarters className="animate-spin" />
-                                                            <span>Running</span>
-                                                        </>
-                                                    ) : (
-                                                        result.status
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{result.language}</TableCell>
-                                            <TableCell>{convertTimestampToDateTime(parseInt(result.timestamp))}</TableCell>
-                                            <TableCell>{result.assignment.title}</TableCell>
+                            <div className="flex flex-col w-full space-y-4 justify-start items-start">
+                                <h1 className="text-gray-300 text-2xl">Submissions</h1>
+                                <Table>
+                                    {results.length === 0 && (
+                                    <TableCaption>No previous submissions.</TableCaption>
+                                    ) || (
+                                    <TableCaption>Results of previous submissions</TableCaption>
+                                    )}
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-28">Name</TableHead>
+                                            <TableHead className="w-36">Status</TableHead>
+                                            <TableHead className="w-36">Language</TableHead>
+                                            <TableHead className="w-36">Time</TableHead>
+                                            <TableHead className="w-36">Assignment</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {results.map((result, index) => (
+                                            <TableRow key={index} onClick={() => navigate(`/results/${result.id}`)}
+                                                      className="cursor-pointer hover:bg-gray-800">
+                                                <TableCell>{result.fileName}</TableCell>
+                                                <TableCell className={`font-semibold ${getStatusColor(result.status)}`}>
+                                                    <div className="flex items-center space-x-2">
+                                                        {result.status === 'Running' ? (
+                                                            <>
+                                                                <AiOutlineLoading3Quarters className="animate-spin" />
+                                                                <span>Running</span>
+                                                            </>
+                                                        ) : (
+                                                            result.status
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>{result.language}</TableCell>
+                                                <TableCell>{convertTimestampToDateTime(parseInt(result.timestamp))}</TableCell>
+                                                <TableCell>{result.assignment.title}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         )}
                     </div>
                 </div>
