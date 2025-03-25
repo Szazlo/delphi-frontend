@@ -102,6 +102,10 @@ function Requests() {
                 <Sidebar />
                 <div className="flex flex-col w-full">
                     <Topbar />
+                    <div className="p-4">
+                        <h1 className="text-gray-300 text-2xl">Requests</h1>
+                        <p className="text-gray-400">View and manage your review requests</p>
+                    </div>
                     <div className="flex flex-col w-full space-y-8 p-4 justify-start items-start">
                         <div className="w-full">
                             <h2 className="text-xl font-semibold text-gray-300 mb-4">My Review Requests</h2>
@@ -120,7 +124,7 @@ function Requests() {
                                 {renderRequestTable(
                                     assignedRequests,
                                     "Reviews assigned to me",
-                                    "No reviews are assigned to you"
+                                    "The are no reviews assigned to you yet"
                                 )}
                             </div>
                         </div>

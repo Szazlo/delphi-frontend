@@ -41,9 +41,13 @@ const RegisterForm = () => {
                         </div>
                     ))}
                     {error && <p className="text-error">{error}</p>}
-                    <div className="flex justify-center mt-6">
-                        <button type="submit" className="w-1/2 bg-gradient-to-r from-lingrad via-lingrad2 to-lingrad3 border-none">
+                    <div className="flex flex-col justify-center items-center">
+                        <button type="submit" className="w-1/2 my-2 bg-gradient-to-r from-lingrad via-lingrad2 to-lingrad3 border-none">
                             Register
+                        </button>
+                        <p className="text-sm text-gray-400">Already have an account?</p>
+                        <button type="button" className="bg-transparent text-gray-300 hover:bg-gray-500 hover:bg-opacity-20 border-none" onClick={() => navigate('/login')}>
+                            Sign In
                         </button>
                     </div>
                 </form>

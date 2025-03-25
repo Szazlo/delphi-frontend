@@ -576,7 +576,7 @@ function Groups() {
                                         />
                                     ))
                                 ) : (
-                                    <p className="col-span-full text-gray-400">No active groups found.</p>
+                                    <p className="col-span-full text-gray-400">No active groups.</p>
                                 )}
                             </div>
 

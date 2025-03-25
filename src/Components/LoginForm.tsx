@@ -41,9 +41,13 @@ const LoginForm = () => {
                     ))}
                     <p className="text-sm text-right text-gray-400">Forgot password?</p>
                     {error && <p className="text-error">{error}</p>}
-                    <div className="flex justify-center mt-6">
-                        <button type="submit" className="w-1/2 bg-gradient-to-r from-lingrad via-lingrad2 to-lingrad3 border-none">
+                    <div className="flex flex-col justify-center items-center">
+                        <button type="submit" className="w-1/2 my-4 bg-gradient-to-r from-lingrad via-lingrad2 to-lingrad3 border-none">
                             Login
+                        </button>
+                        <p className="text-sm text-gray-400">Don't have an account?</p>
+                        <button type="button" className="bg-transparent text-gray-300 hover:bg-gray-500 hover:bg-opacity-20 border-none" onClick={() => navigate('/register')}>
+                            Register
                         </button>
                     </div>
                 </form>

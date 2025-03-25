@@ -237,7 +237,7 @@ function Dashboard() {
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-gray-300 col-span-full">You have no assignments currently.</p>
+                                <p className="text-gray-400 col-span-full">You have no assignments currently.</p>
                             )}
                         </div>
                     </div>

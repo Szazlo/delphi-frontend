@@ -817,8 +817,12 @@ function Results() {
                                 )}
                             </div>
                         ) : (
-                            <div className="flex flex-col w-full space-y-4 justify-start items-start">
+                            <>
+                            <div>
                                 <h1 className="text-gray-300 text-2xl">Submissions</h1>
+                                <p className="text-gray-400">View your previous assignment submissions.</p>
+                            </div>
+                            <div className="flex flex-col w-full space-y-4 justify-start items-start">
                                 <Table>
                                     {results.length === 0 && (
                                     <TableCaption>No previous submissions.</TableCaption>
@@ -859,6 +863,7 @@ function Results() {
                                     </TableBody>
                                 </Table>
                             </div>
+                            </>
                         )}
                     </div>
                 </div>
