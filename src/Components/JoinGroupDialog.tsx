@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
 import { useState } from 'react';
+import {toast} from "sonner";
 
 interface JoinGroupDialogProps {
     isOpen: boolean;
@@ -31,11 +32,12 @@ const JoinGroupDialog = ({ isOpen, onOpenChange, onJoin }: JoinGroupDialogProps)
             if (!response.ok) {
                 throw new Error('Failed to join group');
             }
-
+            toast.success('Joined group successfully');
             onJoin(groupId);
             onOpenChange(false);
             setGroupId('');
             setError('');
+            window.location.reload();
         } catch (error) {
             setError((error as Error).message);
         }
