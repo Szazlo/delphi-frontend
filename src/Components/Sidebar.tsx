@@ -1,5 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "@/Api/auth";
+import { MessageCircleQuestion } from 'lucide-react';
+import HelpDialog from "@/Components/HelpDialog.tsx";
 
 const Sidebar = () => {
     const navigate = useNavigate();
@@ -47,9 +49,12 @@ const Sidebar = () => {
                     ))}
                 </nav>
             </div>
-            <a onClick={handleLogout} className="text-error hover:text-error-light cursor-pointer">
-                Logout
-            </a>
+            <div className="flex flex-col space-y-2">
+                <HelpDialog />
+                <a onClick={handleLogout} className="text-error hover:text-error-light cursor-pointer">
+                    Logout
+                </a>
+            </div>
         </div>
     );
 };
