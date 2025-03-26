@@ -6,7 +6,7 @@ import {useEffect, useState} from "react";
 import GroupCard from "@/Components/GroupCard.tsx";
 import AssignmentCard from "@/Components/AssignmentCard.tsx";
 import { useNavigate } from "react-router-dom";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/Components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem} from "@/Components/ui/carousel";
 import JoinGroupDialog from "@/Components/JoinGroupDialog.tsx";
 import { toast } from "sonner";
 
@@ -34,7 +34,7 @@ function Dashboard() {
     const [groups, setGroups] = useState<Group[]>([]);
     const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [showJoinGroupDialog, setShowJoinGroupDialog] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userId');
     const navigate = useNavigate();
@@ -87,6 +87,7 @@ function Dashboard() {
                 setAssignments(allAssignments);
             } catch (error) {
                 console.error((error as Error).message);
+                toast.error("Failed to fetch assignments");
             }
         };
 
@@ -109,7 +110,6 @@ function Dashboard() {
 
             if (response.status === 404) {
                 toast.error('Group not found');
-                setError('Group not found');
                 return;
             }
 
@@ -132,9 +132,8 @@ function Dashboard() {
             }
 
             setShowJoinGroupDialog(false);
-            setError(null);
         } catch (error) {
-            setError((error as Error).message);
+            toast.error("Failed to join group");
         }
     };
 

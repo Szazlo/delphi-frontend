@@ -180,8 +180,8 @@ function initReviewManager(editor: monacoEditor.editor.IStandaloneCodeEditor, cu
       editButtonEnableRemove: true,
       formatDate: (createdAt: Date | string) => moment(createdAt).format("YY-MM-DD HH:mm"),
       readOnly,
-      verticalOffset: 5, // This are hacks to correct the layout due to parent css
-      commentIndentOffset: 10, // This are hacks to correct the layout due to parent css
+      verticalOffset: 5,
+      commentIndentOffset: 10,
     },
     true,
   );

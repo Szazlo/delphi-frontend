@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { createRoot } from 'react-dom/client'
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/Components/ui/sonner"
 import './index.css'
 
 import Landing from './Pages/Landing/Landing'

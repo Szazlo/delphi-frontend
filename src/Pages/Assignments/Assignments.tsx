@@ -135,7 +135,7 @@ function Assignments() {
             memory_limit: assignment.memoryLimit,
             due_date: formattedDueDate,
             max_score: assignment.maxScore,
-            group_id: assignment.group.id,
+            group_id: assignment.group.id
         };
         const url = 'http://localhost:8080/api/assignments';
         const response = await fetch(url, {
@@ -240,7 +240,6 @@ function Assignments() {
                                         </button>
                                         <AssignmentDialog
                                             groupId=""
-                                            assignment={null}
                                             onSave={handleSaveAssignment}
                                             isOpen={showAssignmentDialog}
                                             onOpenChange={setShowAssignmentDialog}

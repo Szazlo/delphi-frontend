@@ -10,7 +10,8 @@ import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
-} from "@/Components/ui/collapsible"
+} from "@/components/ui/collapsible"
+import {toast} from "sonner";
 
 interface Assignment {
     dueDate: string | null;
@@ -58,7 +59,6 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
         dateOffset: null,
     });
     const [groups, setGroups] = useState<Group[]>([]);
-    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchGroups = async () => {
@@ -161,7 +161,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
             window.location.reload()
             onOpenChange(false);
         } catch (error) {
-            setError((error as Error).message);
+            toast.error("Failed to save assignment");
         }
     };
 

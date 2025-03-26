@@ -1,7 +1,7 @@
 // Code Snippet: Markdown to HTML
 // x
 
-import * as showdown from "showdown";
+import * as showdown from "showdown"
 
 const converter = new showdown.Converter();
 

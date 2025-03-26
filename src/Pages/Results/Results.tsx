@@ -10,10 +10,8 @@ import {AiOutlineLoading3Quarters} from "react-icons/ai";
 
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/Components/ui/table"
 import {Textarea} from "@/Components/ui/textarea"
-import {ReviewerCombobox} from "@/Components/ReviewerCombobox.tsx";
 import Topbar from "@/Components/Topbar.tsx";
 import Sidebar from "@/Components/Sidebar.tsx";
-import {render} from "react-dom";
 import ReactMarkdown from "react-markdown";
 import {toast} from "sonner";
 

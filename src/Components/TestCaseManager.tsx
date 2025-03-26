@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
-import { Button } from '@/Components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { Textarea } from '@/Components/ui/textarea';
 import { Input } from '@/Components/ui/input';

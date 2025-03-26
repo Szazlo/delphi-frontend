@@ -1,12 +1,10 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "@/Api/auth";
-import { MessageCircleQuestion } from 'lucide-react';
 import HelpDialog from "@/Components/HelpDialog.tsx";
 
 const Sidebar = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const roles = localStorage.getItem('roles');
 
     const isActive = (path: string) => location.pathname.startsWith(path);
 
