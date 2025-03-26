@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 import {toast} from "sonner";
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface JoinGroupDialogProps {
     isOpen: boolean;
@@ -17,7 +18,7 @@ const JoinGroupDialog = ({ isOpen, onOpenChange, onJoin }: JoinGroupDialogProps)
             const token = localStorage.getItem('token');
             const userId = localStorage.getItem('userId');
 
-            const response = await fetch(`http://localhost:8080/api/groups/${groupId}/users?userId=${userId}`, {
+            const response = await fetch(`${API_URL}/groups/${groupId}/users?userId=${userId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

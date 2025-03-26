@@ -6,6 +6,7 @@ import FilePondPluginFileEncode from 'filepond-plugin-file-encode';
 import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
 import { useNavigate } from "react-router-dom";
+import API_URL from "@/Api/APIConfig.tsx";
 
 registerPlugin(FilePondPluginFileEncode, FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
 
@@ -58,7 +59,7 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ token, assignmentId
                         maxFiles={1}
                         credits={false}
                         server={{
-                            url: 'http://localhost:8080/api/files',
+                            url: `${API_URL}/files`,
                             process: {
                                 url: '/upload',
                                 method: 'POST',

@@ -14,6 +14,7 @@ import Topbar from "@/Components/Topbar.tsx";
 import Sidebar from "@/Components/Sidebar.tsx";
 import ReactMarkdown from "react-markdown";
 import {toast} from "sonner";
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface Result {
     id: string;
@@ -100,7 +101,7 @@ function Results() {
         try {
             const userId = localStorage.getItem('userId')
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:8080/api/submissions/user/${userId}`, {
+            const response = await fetch(`${API_URL}/submissions/user/${userId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -117,7 +118,7 @@ function Results() {
     const fetchSpecificResult = async (submissionId: string) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:8080/api/submissions/${submissionId}`, {
+            const response = await fetch(`${API_URL}/submissions/${submissionId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -132,7 +133,7 @@ function Results() {
             setSpecificResult(data)
 
             // Fetch the zip file as binary data
-            const zipResponse = await fetch(`http://localhost:8080/api/submissions/download/${submissionId}`, {
+            const zipResponse = await fetch(`${API_URL}/submissions/download/${submissionId}`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -156,7 +157,7 @@ function Results() {
     const fetchManagers = async () => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:8080/api/auth/managers`, {
+            const response = await fetch(`${API_URL}/auth/managers`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -173,7 +174,7 @@ function Results() {
     const fetchReviewerStatus = async (submissionId: string) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:8080/api/submissions/reviewer/${submissionId}`, {
+            const response = await fetch(`${API_URL}/submissions/reviewer/${submissionId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -198,7 +199,7 @@ function Results() {
             const token = localStorage.getItem('token');
 
             // First, get the submission details
-            const submissionResponse = await fetch(`http://localhost:8080/api/submissions/${submissionId}`, {
+            const submissionResponse = await fetch(`${API_URL}/submissions/${submissionId}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
@@ -212,7 +213,7 @@ function Results() {
             }
 
             // Now get the assignment to find the group ID
-            const assignmentResponse = await fetch(`http://localhost:8080/api/assignments/${submissionData.assignment.id}`, {
+            const assignmentResponse = await fetch(`${API_URL}/assignments/${submissionData.assignment.id}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
@@ -226,7 +227,7 @@ function Results() {
             }
 
             // Now we can fetch the group data
-            const groupResponse = await fetch(`http://localhost:8080/api/groups/${assignmentData.group.id}`, {
+            const groupResponse = await fetch(`${API_URL}/groups/${assignmentData.group.id}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
@@ -240,7 +241,7 @@ function Results() {
             const groupData = await groupResponse.json();
 
             // And fetch the group members
-            const membersResponse = await fetch(`http://localhost:8080/api/groups/${assignmentData.group.id}/users`, {
+            const membersResponse = await fetch(`${API_URL}/groups/${assignmentData.group.id}/users`, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
@@ -286,7 +287,7 @@ function Results() {
                 return;
             }
 
-            const response = await fetch(`http://localhost:8080/api/submissions/${submissionId}/addreviewer`, {
+            const response = await fetch(`${API_URL}/submissions/${submissionId}/addreviewer`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -301,7 +302,7 @@ function Results() {
                 if (reviewRequestType === 'random') {
                     // Try to find user details from API if not in managers list
                     try {
-                        const userResponse = await fetch(`http://localhost:8080/api/auth/user/${actualReviewerId}`, {
+                        const userResponse = await fetch(`${API_URL}/auth/user/${actualReviewerId}`, {
                             headers: {
                                 'Content-Type': 'application/json',
                                 Authorization: `Bearer ${token}`
@@ -334,7 +335,7 @@ function Results() {
     const fetchComments = async (submissionId: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/api/comments/submission/${submissionId}`, {
+            const response = await fetch(`${API_URL}/comments/submission/${submissionId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -361,7 +362,7 @@ function Results() {
                 parentId: event.targetId // For replies
             };
 
-            const response = await fetch('http://localhost:8080/api/comments', {
+            const response = await fetch(`${API_URL}/comments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -385,7 +386,7 @@ function Results() {
     const deleteComment = async (commentId: string) => {
         try {
             const token = localStorage.getItem('token');
-            await fetch(`http://localhost:8080/api/comments/${commentId}`, {
+            await fetch(`${API_URL}/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`

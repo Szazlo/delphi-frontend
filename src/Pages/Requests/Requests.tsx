@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
 import Sidebar from "@/Components/Sidebar";
 import Topbar from "@/Components/Topbar";
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface Request {
     id: string;
@@ -26,7 +27,7 @@ function Requests() {
     useEffect(() => {
         const fetchMyRequests = async () => {
             try {
-                const url = `http://localhost:8080/api/submissions/user/${userId}?withReviewRequests=true`;
+                const url = `${API_URL}/submissions/user/${userId}?withReviewRequests=true`;
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -44,7 +45,7 @@ function Requests() {
 
         const fetchAssignedRequests = async () => {
             try {
-                const url = `http://localhost:8080/api/submissions/reviewer/${userId}`;
+                const url = `${API_URL}/submissions/reviewer/${userId}`;
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${token}`

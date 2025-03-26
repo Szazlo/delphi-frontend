@@ -1,3 +1,4 @@
+import API_URL from "@/Api/APIConfig.tsx";
 interface Submission {
     id: string;
     userId: string;
@@ -12,10 +13,8 @@ interface Submission {
 }
 
 class SubmissionService {
-    private baseUrl = 'http://localhost:8080/api';
-
     async getSubmissionsForAssignment(assignmentId: string): Promise<Submission[]> {
-        const response = await fetch(`${this.baseUrl}/assignments/${assignmentId}/submissions`, {
+        const response = await fetch(`${API_URL}/assignments/${assignmentId}/submissions`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -27,7 +26,7 @@ class SubmissionService {
     }
 
     async analyzeSubmissions(assignmentId: string): Promise<string> {
-        const response = await fetch(`${this.baseUrl}/assignments/${assignmentId}/submissions/analyze`, {
+        const response = await fetch(`${API_URL}/assignments/${assignmentId}/submissions/analyze`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }

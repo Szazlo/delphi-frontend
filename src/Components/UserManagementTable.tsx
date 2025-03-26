@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface User {
     id: string;
@@ -24,7 +25,7 @@ const UserManagementTable: React.FC<UserTableProps> = ({ users: initialUsers }) 
     }, [initialUsers]);
 
     const handleCheckboxChange = async (userId: string, isChecked: boolean) => {
-        const url = `http://localhost:8080/api/auth/manager/${userId}`;
+        const url = `${API_URL}/auth/manager/${userId}`;
         const method = isChecked ? 'POST' : 'DELETE';
 
         try {

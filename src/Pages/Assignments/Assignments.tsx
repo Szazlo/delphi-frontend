@@ -8,6 +8,7 @@ import FileUploadDialogue from "@/Components/FileUploadDialogue.tsx";
 import ReactMarkdown from "react-markdown";
 import TestCaseManager from '@/Components/TestCaseManager.tsx';
 import { AssignmentSubmissions } from './AssignmentSubmissions';
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface Group {
     id: string;
@@ -50,7 +51,7 @@ function Assignments() {
     useEffect(() => {
         const fetchAssignments = async () => {
             try {
-                const groupsResponse = await fetch(`http://localhost:8080/api/groups/${userId}/groups`, {
+                const groupsResponse = await fetch(`${API_URL}/groups/${userId}/groups`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -61,7 +62,7 @@ function Assignments() {
                 const groups: Group[] = await groupsResponse.json();
 
                 const assignmentsPromises = groups.map(async (group) => {
-                    const assignmentsResponse = await fetch(`http://localhost:8080/api/assignments/group/${group.id}`, {
+                    const assignmentsResponse = await fetch(`${API_URL}/assignments/group/${group.id}`, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
@@ -87,7 +88,7 @@ function Assignments() {
 
         const fetchSubmissions = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/submissions/user/${userId}`, {
+                const response = await fetch(`${API_URL}/submissions/user/${userId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -137,7 +138,7 @@ function Assignments() {
             max_score: assignment.maxScore,
             group_id: assignment.group.id
         };
-        const url = 'http://localhost:8080/api/assignments';
+        const url = `${API_URL}/assignments`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {

@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem} from "@/Components/ui/carousel";
 import JoinGroupDialog from "@/Components/JoinGroupDialog.tsx";
 import { toast } from "sonner";
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface Group {
     id: string;
@@ -43,7 +44,7 @@ function Dashboard() {
     useEffect(() => {
         const fetchGroups = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/groups/${userId}/groups`, {
+                const response = await fetch(`${API_URL}/groups/${userId}/groups`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -60,7 +61,7 @@ function Dashboard() {
 
         const fetchAssignments = async () => {
             try {
-                const groupsResponse = await fetch(`http://localhost:8080/api/groups/${userId}/groups`, {
+                const groupsResponse = await fetch(`${API_URL}/groups/${userId}/groups`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -71,7 +72,7 @@ function Dashboard() {
                 const groups: Group[] = await groupsResponse.json();
 
                 const assignmentsPromises = groups.map(async (group) => {
-                    const assignmentsResponse = await fetch(`http://localhost:8080/api/assignments/group/${group.id}`, {
+                    const assignmentsResponse = await fetch(`${API_URL}/assignments/group/${group.id}`, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
@@ -101,7 +102,7 @@ function Dashboard() {
 
     const handleJoinGroup = async (groupId: string) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/groups/${groupId}/users?userId=${userId}`, {
+            const response = await fetch(`${API_URL}/groups/${groupId}/users?userId=${userId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -119,7 +120,7 @@ function Dashboard() {
             }
 
             // Refresh groups after successfully joining
-            const groupsResponse = await fetch(`http://localhost:8080/api/groups/${userId}/groups`, {
+            const groupsResponse = await fetch(`${API_URL}/groups/${userId}/groups`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -162,7 +163,7 @@ function Dashboard() {
             max_score: assignment.maxScore,
             group_id: assignment.group.id,
         };
-        const url = 'http://localhost:8080/api/assignments';
+        const url = API_URL+'/assignments';
         const response = await fetch(url, {
             method: 'POST',
             headers: {

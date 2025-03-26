@@ -16,6 +16,7 @@ import UserGroupMgmtTable from "@/Components/UserGroupMgmtTable.tsx";
 import AssignmentDialog from "@/Components/AssignmentDialog.tsx";
 import JoinGroupDialog from "@/Components/JoinGroupDialog.tsx";
 import { toast } from "sonner"
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface Group {
     id: string;
@@ -74,7 +75,7 @@ function Groups() {
         const fetchGroups = async () => {
             try {
                 const userId = localStorage.getItem('userId');
-                const response = await fetch(`http://localhost:8080/api/groups/${userId}/groups`, {
+                const response = await fetch(`${API_URL}/groups/${userId}/groups`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -92,7 +93,7 @@ function Groups() {
         const fetchUsers = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('http://localhost:8080/api/auth/getUsers', {
+                const response = await fetch('${API_URL}/auth/getUsers', {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -102,7 +103,7 @@ function Groups() {
                 }
                 const data = await response.json();
                 const usersInGroup = await Promise.all(data.map(async (user: any) => {
-                    const usersInGroupResponse = await fetch(`http://localhost:8080/api/groups/${id}/users`, {
+                    const usersInGroupResponse = await fetch(`${API_URL}/groups/${id}/users`, {
                         headers: {
                             Authorization: `Bearer ${token}`
                         }
@@ -122,7 +123,7 @@ function Groups() {
 
         const fetchAssignments = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/assignments/group/${id}`, {
+                const response = await fetch(`${API_URL}/assignments/group/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -133,7 +134,7 @@ function Groups() {
                 const data = await response.json();
                 setAssignments(data);
 
-                const groupResponse = await fetch(`http://localhost:8080/api/groups/${id}`, {
+                const groupResponse = await fetch(`${API_URL}/groups/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -159,7 +160,7 @@ function Groups() {
     const handleCreateGroup = async () => {
         try {
             const userId = localStorage.getItem('userId');
-            const response = await fetch('http://localhost:8080/api/groups', {
+            const response = await fetch(`${API_URL}/groups`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -183,7 +184,7 @@ function Groups() {
         if (!editGroup) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/groups/${editGroup.id}`, {
+            const response = await fetch(`${API_URL}/groups/${editGroup.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -214,7 +215,7 @@ function Groups() {
         }
 
         try {
-            const response = await fetch(`http://localhost:8080/api/groups/${editGroup.id}`, {
+            const response = await fetch(`${API_URL}/groups/${editGroup.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -237,7 +238,7 @@ function Groups() {
     const handleArchiveGroup = async (group: Group) => {
         try {
             const userId = localStorage.getItem('userId');
-            const response = await fetch(`http://localhost:8080/api/groups/${group.id}/archive?owner=${userId}`, {
+            const response = await fetch(`${API_URL}/groups/${group.id}/archive?owner=${userId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -261,7 +262,7 @@ function Groups() {
     const handleRestoreGroup = async (group: Group) => {
         try {
             const userId = localStorage.getItem('userId');
-            const response = await fetch(`http://localhost:8080/api/groups/${group.id}/restore?owner=${userId}`, {
+            const response = await fetch(`${API_URL}/groups/${group.id}/restore?owner=${userId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -299,7 +300,7 @@ function Groups() {
             max_score: assignment.maxScore,
             group_id: assignment.group.id,
         };
-        const url = 'http://localhost:8080/api/assignments';
+        const url = `${API_URL}/assignments`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -327,7 +328,7 @@ function Groups() {
             const token = localStorage.getItem('token');
             const userId = localStorage.getItem('userId');
 
-            const response = await fetch(`http://localhost:8080/api/groups/${groupId}/users?userId=${userId}`, {
+            const response = await fetch(`${API_URL}/groups/${groupId}/users?userId=${userId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

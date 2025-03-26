@@ -4,6 +4,7 @@ import {Buffer} from 'buffer';
 import { toast } from "sonner"
 import UserManagementTable from "@/Components/UserManagementTable.tsx";
 import { AIConfigurationSection } from './AIConfigurationSection';
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface UserDetails {
     firstName: string;
@@ -78,7 +79,7 @@ function Settings() {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:8080/api/auth/getUsers', {
+            const response = await fetch(`${API_URL}/auth/getUsers`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -88,7 +89,7 @@ function Settings() {
             }
             const data = await response.json();
             const usersWithManagerStatus = await Promise.all(data.map(async (user: any) => {
-                const managerResponse = await fetch(`http://localhost:8080/api/auth/manager/${user.id}`, {
+                const managerResponse = await fetch(`${API_URL}/auth/manager/${user.id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -116,7 +117,7 @@ function Settings() {
         try {
             const {profilePicture, ...detailsToUpdate} = userDetails; // Exclude profilePicture from the update request
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/api/auth/update/${userId}`, {
+            const response = await fetch(`${API_URL}/auth/update/${userId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -138,7 +139,7 @@ function Settings() {
         setError(null);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/api/users/pfp/${userId}`, {
+            const response = await fetch(`${API_URL}/users/pfp/${userId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

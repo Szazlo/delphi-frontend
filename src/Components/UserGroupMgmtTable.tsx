@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface User {
     id: string;
@@ -24,7 +25,7 @@ const UserGroupMgmtTable: React.FC<UserGroupMgmtTableProps> = ({ groupId, initia
     }, [initialUsers]);
 
     const handleCheckboxChange = async (userId: string, isChecked: boolean) => {
-        const url = `http://localhost:8080/api/groups/${groupId}/users${isChecked ? `?userId=${userId}` : `/${userId}`}`;
+        const url = `${API_URL}/groups/${groupId}/users${isChecked ? `?userId=${userId}` : `/${userId}`}`;
         const method = isChecked ? 'POST' : 'DELETE';
 
         try {

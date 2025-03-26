@@ -1,11 +1,10 @@
 import {Buffer} from 'buffer';
+import API_URL from './APIConfig';
 
-const API_URL = 'http://localhost:8080/api/auth';
-
-//get profile picture from GET http://localhost:8080/api/users/pfp/:userId
+//get profile picture from GET /api/users/pfp/:userId
 async function getProfilePicture(userId: string): Promise<string> {
     const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:8080/api/users/pfp/${userId}`, {
+    const response = await fetch(`${API_URL}/users/pfp/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
     });
     return await response.text();
@@ -19,7 +18,7 @@ async function login(username: string, password: string): Promise<boolean> {
     };
 
     try {
-        const response = await fetch(`${API_URL}/login`, options);
+        const response = await fetch(`${API_URL}/auth/login`, options);
         if (response.status === 401) throw new Error('401');
         const { access_token } = await response.json();
         localStorage.setItem('token', access_token);

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { Textarea } from '@/Components/ui/textarea';
 import { Input } from '@/Components/ui/input';
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface TestCase {
     id: string;
@@ -35,7 +36,7 @@ const TestCaseManager: React.FC<TestCaseManagerProps> = ({ assignmentId }) => {
     const fetchTestCases = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/api/testcases/assignment/${assignmentId}`, {
+            const response = await fetch(`${API_URL}/testcases/assignment/${assignmentId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -75,8 +76,8 @@ const TestCaseManager: React.FC<TestCaseManagerProps> = ({ assignmentId }) => {
             const token = localStorage.getItem('token');
             const method = isEditing ? 'PUT' : 'POST';
             const url = isEditing
-                ? `http://localhost:8080/api/testcases/${currentTestCase.id}`
-                : `http://localhost:8080/api/testcases`;
+                ? `${API_URL}/testcases/${currentTestCase.id}`
+                : `${API_URL}/testcases`;
 
             const body = isEditing
                 ? { ...currentTestCase }
@@ -116,7 +117,7 @@ const TestCaseManager: React.FC<TestCaseManagerProps> = ({ assignmentId }) => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/api/testcases/${id}`, {
+            const response = await fetch(`${API_URL}/testcases/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`

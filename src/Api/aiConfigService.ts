@@ -1,3 +1,5 @@
+import API_URL from "@/Api/APIConfig.tsx";
+
 interface AIConfiguration {
     id: string;
     model: string;
@@ -9,7 +11,7 @@ interface AIConfiguration {
 }
 
 class AIConfigurationService {
-    private baseUrl = 'http://localhost:8080/api/ai-config';
+    private baseUrl = `${API_URL}/ai-config`;
 
     async getAllConfigurations(): Promise<AIConfiguration[]> {
         const response = await fetch(this.baseUrl, {

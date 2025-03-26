@@ -7,6 +7,7 @@ import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
 import { isTokenValid } from "@/Api/auth.tsx";
 import { useNavigate } from "react-router-dom";
 import { FilePondFile } from "filepond";
+import API_URL from "@/Api/APIConfig.tsx";
 
 // Register FilePond plugins
 registerPlugin(FilePondPluginFileEncode, FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
@@ -53,7 +54,7 @@ const HeroSection = () => {
                             maxFiles={1}
                             credits={false}
                             server={{
-                                url: 'http://localhost:8080/api/files',
+                                url: `${API_URL}/files`,
                                 process: {
                                     url: '/upload',
                                     method: 'POST',

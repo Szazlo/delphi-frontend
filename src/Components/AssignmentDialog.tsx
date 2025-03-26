@@ -12,6 +12,7 @@ import {
     CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import {toast} from "sonner";
+import API_URL from "@/Api/APIConfig.tsx";
 
 interface Assignment {
     dueDate: string | null;
@@ -64,7 +65,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
         const fetchGroups = async () => {
             const userId = localStorage.getItem('userId');
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/api/groups`, {
+            const response = await fetch(`${API_URL}/groups`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -107,7 +108,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
         const baseDate = formData.dueDate ? new Date(formData.dueDate) : null;
 
         const createAssignment = async (data: any) => {
-            const url = assignment ? `http://localhost:8080/api/assignments/${assignment.id}` : 'http://localhost:8080/api/assignments';
+            const url = assignment ? `${API_URL}/assignments/${assignment.id}` : `${API_URL}/assignments`;
             const method = assignment ? 'PUT' : 'POST';
             const response = await fetch(url, {
                 method: method,
@@ -170,7 +171,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
         const confirmed = window.confirm('Are you sure you want to delete this assignment?\nThis action cannot be undone.');
         if (!confirmed) return;
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8080/api/assignments/${assignment.id}`, {
+        const response = await fetch(`${API_URL}/assignments/${assignment.id}`, {
             method: 'DELETE',
             headers: {
                 Authorization: `Bearer ${token}`,
