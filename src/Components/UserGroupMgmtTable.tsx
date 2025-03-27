@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
 import API_URL from "@/Api/APIConfig.tsx";
+import {toast} from "sonner";
 
 interface User {
     id: string;
@@ -40,6 +41,7 @@ const UserGroupMgmtTable: React.FC<UserGroupMgmtTableProps> = ({ groupId, initia
             });
 
             if (!response.ok) {
+                toast.error(response.statusText);
                 throw new Error('Failed to update user group status');
             }
 
