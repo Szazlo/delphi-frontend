@@ -36,6 +36,7 @@ interface Assignment {
     timeLimit: number;
     memoryLimit: number;
     maxScore: number;
+    gradeWeight: number;
 }
 
 interface User {
@@ -93,7 +94,7 @@ function Groups() {
         const fetchUsers = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('${API_URL}/auth/getUsers', {
+                const response = await fetch(`${API_URL}/auth/getUsers`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }

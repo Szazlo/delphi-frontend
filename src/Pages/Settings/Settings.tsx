@@ -151,9 +151,10 @@ function Settings() {
                 const data = await response.json();
                 throw new Error(data.message || 'Failed to update profile picture');
             }
-            alert('Profile picture updated successfully.');
+            toast.success('Profile picture updated successfully');
             localStorage.setItem('profilePicture', userDetails.profilePicture);
         } catch (error) {
+            toast.error('Failed to update profile picture');
             setError((error as Error).message);
         }
     }
@@ -285,7 +286,7 @@ function Settings() {
                             </div>
                         </div>
 
-                        {roles.includes('manager') && (
+                        {(roles.includes('manager') || roles.includes('admin'))  && (
                             <div className="bg-white bg-opacity-5 p-6 rounded-lg shadow-md">
                                 <h2 className="text-xl font-semibold mb-4 text-white">User Management</h2>
                                 <input

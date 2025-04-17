@@ -30,6 +30,8 @@ interface Result {
         title: string;
         maxRuntime: number;
         maxMemory: number;
+        maxScore: number;
+        gradeWeight: number;
     };
     testResults: string;
     aioutput: string | null;
@@ -660,9 +662,11 @@ function Results() {
                                             <p className="text-sm ml-4">Runtime: {specificResult.runtime} ms</p>
                                             <p className="text-sm ml-4">Memory: {specificResult.memory} KB</p>
                                             <p className="text-sm ml-4">Assignment: {specificResult.assignment.title}</p>
+                                            <p className="text-sm ml-4">Grading Weight (Tests/Linting): {specificResult.assignment.gradeWeight}/{100 - specificResult.assignment.gradeWeight}</p>
                                         </div>
                                         <p className="text-sm bg-gradient-to-r from-lingrad2 to-lingrad3 bg-clip-text text-transparent">Grade: {specificResult.grade ? specificResult.grade.toFixed(2) : 'N/A'}%</p>
                                     </div>
+                                    <p className={`float-right text-sm bg-gradient-to-r from-lingrad to-lingrad2 bg-clip-text text-transparent`}>Marks: {specificResult.grade ? (specificResult.grade * specificResult.assignment.maxScore / 100).toFixed(2)+"/"+specificResult.assignment.maxScore : 'N/A'}</p>
                                 </div>
 
                                 {specificResult.status === 'Running' ? (

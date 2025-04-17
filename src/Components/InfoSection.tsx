@@ -14,7 +14,7 @@ const InfoSection = () => {
         },
         {
             title: "Know more",
-            content: "Delphi supports multiple programming languages and integrates seamlessly with popular development tools. Our advanced AI algorithms provide context-aware suggestions for improving your code."
+            content: "Delphi provides code testing, linting, AI code review, and more. It helps you to improve your code quality and programming proficiency."
         }
     ];
 

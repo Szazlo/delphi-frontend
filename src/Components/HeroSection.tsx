@@ -40,7 +40,7 @@ const HeroSection = () => {
                         </span>
                     </h1>
                     <p className="mt-4 text-lg">
-                        Get detailed, AI-driven feedback on your code in seconds. Learn faster, write cleaner code, and level up your programming skills with personalized suggestions and expert guidance.
+                        Get detailed, AI-driven feedback on your code in seconds. Learn faster, write cleaner code, and level up your programming skills with personalized suggestions.
                     </p>
                 </div>
 

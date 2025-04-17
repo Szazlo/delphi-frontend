@@ -25,6 +25,7 @@ interface Assignment {
     timeLimit: number;
     memoryLimit: number;
     maxScore: number;
+    gradeWeight: number;
 }
 
 interface Submission {
@@ -136,7 +137,8 @@ function Assignments() {
             memory_limit: assignment.memoryLimit,
             due_date: formattedDueDate,
             max_score: assignment.maxScore,
-            group_id: assignment.group.id
+            group_id: assignment.group.id,
+            grade_weight: assignment.gradeWeight,
         };
         const url = `${API_URL}/assignments`;
         const response = await fetch(url, {

@@ -23,6 +23,7 @@ interface Assignment {
     timeLimit: number;
     memoryLimit: number;
     maxScore: number;
+    gradeWeight?: number;
 }
 
 interface Group {
@@ -54,6 +55,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
         timeLimit: assignment?.timeLimit || 10,
         memoryLimit: assignment?.memoryLimit || 500,
         maxScore: assignment?.maxScore || 0,
+        gradeWeight: assignment?.gradeWeight || 70,
     });
     const [seriesSettings, setSeriesSettings] = useState<SeriesSettings>({
         count: null,
@@ -91,6 +93,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
                 timeLimit: assignment.timeLimit,
                 memoryLimit: assignment.memoryLimit,
                 maxScore: assignment.maxScore,
+                gradeWeight: assignment.gradeWeight,
             });
         }
     }, [assignment]);
@@ -141,6 +144,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
                         due_date: assignmentDate ? assignmentDate.toISOString().replace('T', ' ').replace('Z', '') : null,
                         max_score: formData.maxScore,
                         group_id: formData.group_id,
+                        gradeWeight: formData.gradeWeight,
                     };
 
                     const data = await createAssignment(formattedData);
@@ -155,6 +159,7 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
                     due_date: baseDate ? baseDate.toISOString().replace('T', ' ').replace('Z', '') : null,
                     max_score: formData.maxScore,
                     group_id: formData.group_id,
+                    gradeWeight: formData.gradeWeight,
                 };
                 const data = await createAssignment(formattedData);
                 onSave(data, formData.group_id);
@@ -257,6 +262,53 @@ const AssignmentDialog: React.FC<AssignmentDialogProps> = ({ groupId, assignment
                         onChange={handleChange}
                         className="mb-2 p-2 border rounded w-full bg-transparent border-gray-600"
                     />
+                    <div className="mb-2">
+                        <label className="text-gray-300 font-semibold">Grade Weight</label>
+                        <p className="text-gray-400 text-sm">The assigned grade is the ratio Passed Tests + Linting Score.
+                            Select the weight of the Test Cases to Linting ration in the final grade.
+                        </p>
+                        <div className="flex justify-between">
+                            <div className="flex flex-col">
+                                <p className="text-gray-300 text-sm font-semibold">Test Cases Weight %</p>
+                                <input
+                                    type="number"
+                                    name="testsWeight"
+                                    placeholder="Test Cases Weight"
+                                    value={formData.gradeWeight || 70}
+                                    min={0}
+                                    max={100}
+                                    onChange={(e) => {
+                                        const value = parseFloat(e.target.value);
+                                        setFormData(prevState => ({
+                                            ...prevState,
+                                            gradeWeight: value > 100 ? 100 : value < 0 ? 0 : value
+                                        }));
+                                    }}
+                                    className="mb-2 p-2 border rounded w-full bg-transparent border-gray-600"
+                                />
+                            </div>
+                            <p className="text-gray-300 self-center">/</p>
+                            <div className="flex flex-col">
+                                <p className="text-gray-300 text-sm font-semibold">Linting Weight %</p>
+                                <input
+                                    type="number"
+                                    name="lintingWeight"
+                                    placeholder="Linting Weight"
+                                    value={100 - (formData.gradeWeight || 70)}
+                                    min={0}
+                                    max={100}
+                                    onChange={(e) => {
+                                        const value = parseFloat(e.target.value);
+                                        setFormData(prevState => ({
+                                            ...prevState,
+                                            gradeWeight: 100 - value < 0 ? 0 : 100 - value
+                                        }));
+                                    }}
+                                    className="mb-2 p-2 border rounded w-full bg-transparent border-gray-600"
+                                />
+                            </div>
+                        </div>
+                    </div>
                     <div className="flex justify-end space-x-2">
                         {assignment && (
                             <button
