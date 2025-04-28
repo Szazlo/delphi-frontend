@@ -1,50 +1,56 @@
-# React + TypeScript + Vite
+# Delphi Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
 
-Currently, two official plugins are available:
+**Delphi** is an **automated programming analysis and assistance tool** designed to enhance the learning experience for beginner programmers. It serves as both a **virtual "pair programmer"** and an **assignment management system**. Delphi provides real-time feedback on programming assignments, combining automated grading, AI-driven code analysis, and a peer review system to promote active learning and reflective practices.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This repository contains the **frontend** codebase for Delphi, responsible for delivering a responsive and intuitive user experience for both students and educators.
 
-## Expanding the ESLint configuration
+Key functionalities include:
+- Assignment creation and management.
+- Code submission and automatic evaluation.
+- Inline code reviews and peer feedback.
+- AI-generated, guided error explanations and suggestions.
+- Group management and peer collaboration.
+- Secure user authentication and authorization via OAuth2 (Keycloak).
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Tech Stack
 
-- Configure the top-level `parserOptions` property like this:
+- **Framework:** React (with TypeScript)
+- **Build Tool:** Vite
+- **UI Libraries:** TailwindCSS, ShadCN
+- **Editor:** Monaco Editor (VSCode-based code viewer)
+- **State Management:** React Context API
+- **Authentication:** OAuth2 / OpenID Connect via Keycloak
+- **HTTP Requests:** REST API integration
+- **Other Libraries:**
+  - FilePond (file uploads)
+  - react-markdown (rendering markdown content)
+  - Custom adaptations for code review functionality
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+The frontend interacts with a backend API for user management, assignment workflows, code submissions, AI feedback, and peer reviews.
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Running the Frontend Locally
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+1. **Install dependencies**:
+   ```bash
+      npm install
+   ```
+2. Configure environment variables: Create a `.env` file at the root of the project with the following content:
+  VITE_API_URL=https://your-backend-url/api
+  VITE_KEYCLOAK_URL=https://your-keycloak-url
+  VITE_KEYCLOAK_REALM=your-realm
+  VITE_KEYCLOAK_CLIENT_ID=your-client-id
+3. Start the development server:
+  ```npm run dev```
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+# Backend Repository
+The backend handles:
+- Code execution and grading
+- AI-assisted feedback generation
+- Authentication and authorization (Keycloak)
+- Group and assignment management
+- Peer review system
+- Exposes REST API endpoint for services and CRUD operations.
+
+Backend Repository Link: [Backend](https://github.com/Szazlo/delphi-backend)
